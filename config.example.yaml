@@ -1,0 +1,4 @@
+meta:
+  run-mode: debug
+  port: 10014
+  log-path: ./log/console.log

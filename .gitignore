@@ -6,3 +6,5 @@
 
 ### Project ###
 build/
+config.yaml
+log/
