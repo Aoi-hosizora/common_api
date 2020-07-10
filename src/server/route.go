@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/Aoi-hosizora/common_api/src/common/result"
+	"github.com/Aoi-hosizora/common_api/src/controller"
 	"github.com/gofiber/fiber"
 )
 
@@ -11,8 +12,7 @@ func InitRoute(app *fiber.App) {
 	})
 
 	gh := app.Group("/gh")
-	gh.Get("/a", func(c *fiber.Ctx) {})
-	gh.Get("/b", func(c *fiber.Ctx) {})
+	gh.Get("/users/:name/issues/event", controller.GetIssueEvents)
 
 	app.All("/*", func(c *fiber.Ctx) {
 		result.Status(404).SetMessage("route not found").JSON(c)

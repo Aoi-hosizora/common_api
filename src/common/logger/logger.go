@@ -43,3 +43,7 @@ func Setup() error {
 	Logger = logger
 	return nil
 }
+
+func LogGhUrl(url string) {
+	Logger.Infof("[GITHUB] %s", url)
+}
