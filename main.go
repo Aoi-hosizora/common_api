@@ -5,6 +5,7 @@ import (
 	"github.com/Aoi-hosizora/common_api/src/common/logger"
 	"github.com/Aoi-hosizora/common_api/src/config"
 	"github.com/Aoi-hosizora/common_api/src/server"
+	"github.com/Aoi-hosizora/goapidoc"
 	"log"
 )
 
@@ -22,7 +23,11 @@ func main() {
 }
 
 func run() {
-	err := config.Load(*fConfig)
+	_, err := goapidoc.GenerateJsonWithSwagger2("./docs/doc.json")
+	if err != nil {
+		log.Fatalf("Failed to generate swagger2 json: %v", err)
+	}
+	err = config.Load(*fConfig)
 	if err != nil {
 		log.Fatalln("Failed to load config:", err)
 	}

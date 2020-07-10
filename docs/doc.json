@@ -1,0 +1,64 @@
+{
+  "basePath": "/",
+  "definitions": {},
+  "host": "localhost:10014",
+  "info": {
+    "title": "common_api",
+    "description": "My common api collection",
+    "version": "1.0",
+    "contact": {
+      "name": "Aoi-hosizora",
+      "url": "https://github.com/Aoi-hosizora/",
+      "email": "aoihosizora@hotmail.com"
+    }
+  },
+  "paths": {
+    "/gh/users/{name}/issues/event": {
+      "get": {
+        "summary": "get github user issues event",
+        "operationId": "-gh-users-name-issues-event-get",
+        "tags": [
+          "Github"
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "github username"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "description": "query page",
+            "format": "int32",
+            "default": 30
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "description": "github token, format: Token xxx"
+          }
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "securityDefinitions": null,
+  "swagger": "2.0",
+  "tags": null
+}

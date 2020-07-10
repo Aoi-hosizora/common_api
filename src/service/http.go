@@ -21,7 +21,7 @@ func HttpGet(url string, header *http.Header, cb func(string)) ([]byte, error) {
 	cb(fmt.Sprintf("%d: %s", resp.StatusCode, url))
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("%d: %s", resp.StatusCode, resp.Status)
+		return nil, fmt.Errorf(resp.Status)
 	}
 
 	body := resp.Body
