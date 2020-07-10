@@ -121,7 +121,8 @@ func GetIssueEvents(name string, page int32, auth string) ([]interface{}, error)
 	// get issue events
 	getIssueEvents := func(issue *Issue, page int32) ([]interface{}, error) {
 		url := fmt.Sprintf(GITHUB_ISSUE_EVENT_URL, issue.Owner, issue.Repo, issue.Number, page)
-		bs, err := HttpGet(url, header, logger.LogGhUrl)
+		// bs, err := HttpGet(url, header, logger.LogGhUrl)
+		bs, err := HttpGet(url, header, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -179,13 +180,20 @@ func GetIssueEvents(name string, page int32, auth string) ([]interface{}, error)
 	events = eventsTemp
 
 	// filter issue event
-	type TempEvent struct {
-		CreateAt time.Time `json:"create_at"`
-	}
 	sort.Slice(events, func(i, j int) bool {
-		ei, oki := events[i].(TempEvent)
-		ej, okj := events[j].(TempEvent)
-		return oki && okj && ei.CreateAt.Unix() > ej.CreateAt.Unix()
+		ei, oki := events[i].(map[string]interface{})
+		ej, okj := events[j].(map[string]interface{})
+		if !oki || !okj {
+			return false
+		}
+		cti, oki := ei["created_at"]
+		ctj, okj := ej["created_at"]
+		if !oki || !okj {
+			return false
+		}
+		ti, eri := time.Parse(time.RFC3339, cti.(string))
+		tj, erj := time.Parse(time.RFC3339, ctj.(string))
+		return eri == nil && erj == nil && ti.Unix() > tj.Unix()
 	})
 
 	l := int32(len(events))

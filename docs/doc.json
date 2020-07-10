@@ -34,8 +34,7 @@
             "required": false,
             "type": "integer",
             "description": "query page",
-            "format": "int32",
-            "default": 30
+            "format": "int32"
           },
           {
             "name": "Authorization",
