@@ -45,5 +45,5 @@ func Setup() error {
 }
 
 func LogGhUrl(url string) {
-	Logger.Infof("[GITHUB] %s", url)
+	Logger.Infof("[Github] %s", url)
 }

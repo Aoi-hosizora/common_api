@@ -17,11 +17,11 @@ import (
 const (
 	GITHUB_SEARCH_ISSUE_URL  = "https://api.github.com/search/issues?sort=created&order=desc&q=involves:%s&page=%d"
 	GITHUB_ISSUE_EVENT_URL   = "https://api.github.com/repos/%s/%s/issues/%d/events?page=%d"
-	GITHUB_ISSUE_EVENT_PAGES = 1
+	GITHUB_ISSUE_EVENT_PAGES = 3
 	GITHUB_ISSUE_EVENT_LIMIT = 30
 )
 
-func GetIssueEvents(name string, page int32, auth string) ([]interface{}, error) {
+func GetIssueEvents(name string, page int32, auth string) ([]map[string]interface{}, error) {
 	header := &http.Header{}
 	if auth != "" {
 		header.Add("Authorization", auth)
@@ -119,33 +119,46 @@ func GetIssueEvents(name string, page int32, auth string) ([]interface{}, error)
 	}
 
 	// get issue events
-	getIssueEvents := func(issue *Issue, page int32) ([]interface{}, error) {
+	getIssuesCnt := 0
+	getIssueEvents := func(issue *Issue, page int32) ([]map[string]interface{}, error) {
 		url := fmt.Sprintf(GITHUB_ISSUE_EVENT_URL, issue.Owner, issue.Repo, issue.Number, page)
 		// bs, err := HttpGet(url, header, logger.LogGhUrl)
 		bs, err := HttpGet(url, header, nil)
 		if err != nil {
 			return nil, err
 		}
+		getIssuesCnt++
 
-		data := make([]interface{}, 0)
+		data := make([]map[string]interface{}, 0)
 		err = json.Unmarshal(bs, &data)
 		if err != nil {
 			return nil, err
 		}
 
-		return data, nil
+		out := make([]map[string]interface{}, 0)
+		for idx := range data {
+			if data[idx]["event"] == "subscribed" {
+				continue
+			}
+			data[idx]["repo"] = fmt.Sprintf("%s/%s", issue.Owner, issue.Repo)
+			data[idx]["number"] = issue.Number
+			data[idx]["involve"] = name
+			out = append(out, data[idx])
+		}
+		return out, nil
 	}
 
-	events := make([]interface{}, 0)
+	events := make([]map[string]interface{}, 0)
 	mu := &sync.Mutex{}
 	wg := &sync.WaitGroup{}
 	wg.Add(len(issues) * GITHUB_ISSUE_EVENT_PAGES)
 
 	err = nil
-	for page := int32(1); page <= GITHUB_ISSUE_EVENT_PAGES; page++ {
-		for _, issue := range issues {
-			go func(issue *Issue, page int32, err *error) {
-				if *err != nil {
+	for _, issue := range issues {
+		emptied := false
+		for page := int32(1); page <= GITHUB_ISSUE_EVENT_PAGES; page++ {
+			go func(issue *Issue, page int32, err *error, emptied *bool) {
+				if *err != nil || *emptied {
 					wg.Done()
 					return
 				}
@@ -157,37 +170,27 @@ func GetIssueEvents(name string, page int32, auth string) ([]interface{}, error)
 					mu.Unlock()
 					wg.Done()
 					return
+				} else if len(data) == 0 {
+					*emptied = true
 				}
 
 				mu.Lock()
 				events = append(events, data...)
 				mu.Unlock()
 				wg.Done()
-			}(issue, page, &err)
+			}(issue, page, &err, &emptied)
 		}
 	}
 	wg.Wait()
 	if err != nil {
 		return nil, err
 	}
-
-	eventsTemp := make([]interface{}, 0)
-	for _, ev := range events {
-		if ev != nil {
-			eventsTemp = append(eventsTemp, ev)
-		}
-	}
-	events = eventsTemp
+	logger.LogGhUrl(fmt.Sprintf("get issue event count: %d", getIssuesCnt))
 
 	// filter issue event
 	sort.Slice(events, func(i, j int) bool {
-		ei, oki := events[i].(map[string]interface{})
-		ej, okj := events[j].(map[string]interface{})
-		if !oki || !okj {
-			return false
-		}
-		cti, oki := ei["created_at"]
-		ctj, okj := ej["created_at"]
+		cti, oki := events[i]["created_at"]
+		ctj, okj := events[j]["created_at"]
 		if !oki || !okj {
 			return false
 		}
@@ -200,7 +203,7 @@ func GetIssueEvents(name string, page int32, auth string) ([]interface{}, error)
 	from := GITHUB_ISSUE_EVENT_LIMIT * (page - 1)
 	to := GITHUB_ISSUE_EVENT_LIMIT * page
 	if from >= l {
-		return []interface{}{}, nil
+		return []map[string]interface{}{}, nil
 	}
 	if to > l {
 		to = l
