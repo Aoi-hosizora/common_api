@@ -13,10 +13,11 @@
     }
   },
   "paths": {
-    "/gh/users/{name}/issues/event": {
+    "/gh/users/{name}/issues/timeline": {
       "get": {
-        "summary": "get github user issues event",
-        "operationId": "-gh-users-name-issues-event-get",
+        "summary": "get github user issues timeline (event)",
+        "operationId": "-gh-users-name-issues-timeline-get",
+        "description": "Fixed field: id?, node_id?, event(enum), actor(User), commit_id?, commit_url?, created_at(time), repo(string), number(integer), involve(string)",
         "tags": [
           "Github"
         ],

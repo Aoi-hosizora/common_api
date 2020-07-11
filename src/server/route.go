@@ -12,7 +12,7 @@ func InitRoute(app *fiber.App) {
 	})
 
 	gh := app.Group("/gh")
-	gh.Get("/users/:name/issues/event", controller.GetIssueEvents)
+	gh.Get("/users/:name/issues/timeline", controller.GetIssueTimeline)
 
 	app.All("/*", func(c *fiber.Ctx) {
 		result.Status(404).SetMessage("route not found").JSON(c)
