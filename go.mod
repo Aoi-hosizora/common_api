@@ -8,7 +8,7 @@ require (
 	github.com/arsmn/fiber-swagger v1.3.2
 	github.com/gofiber/compression v0.3.0
 	github.com/gofiber/cors v0.2.1
-	github.com/gofiber/fiber v1.12.5
+	github.com/gofiber/fiber v1.12.6
 	github.com/gofiber/recover v0.1.1
 	github.com/sirupsen/logrus v1.6.0
 	github.com/snowzach/rotatefilehook v0.0.0-20180327172521-2f64f265f58c

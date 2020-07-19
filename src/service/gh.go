@@ -17,7 +17,7 @@ import (
 const (
 	GITHUB_SEARCH_ISSUE_URL   = "https://api.github.com/search/issues?sort=%s&order=%s&q=involves:%s&page=%d&per_page=%d"
 	GITHUB_ISSUE_TIMELINE_URL = "https://api.github.com/repos/%s/%s/issues/%d/timeline?per_page=%d"
-	GITHUB_ISSUE_EVENT_LIMIT  = 30
+	GITHUB_ISSUE_EVENT_LIMIT  = 20
 )
 
 func GetIssueEvents(name string, page int32, auth string) ([]map[string]interface{}, error) {
@@ -73,7 +73,7 @@ func GetIssueEvents(name string, page int32, auth string) ([]map[string]interfac
 
 	perPage := int32(len(issueUrls))
 	pageCnt := int(math.Ceil(float64(tot) / float64(perPage)))
-	enoughCnt := page * GITHUB_ISSUE_EVENT_LIMIT
+	enoughCnt := (page + 1) * GITHUB_ISSUE_EVENT_LIMIT
 	if perPage < enoughCnt && pageCnt > 1 { // not enough && has next page
 		wg := &sync.WaitGroup{}
 		mu := &sync.Mutex{}
@@ -190,8 +190,9 @@ func GetIssueEvents(name string, page int32, auth string) ([]map[string]interfac
 				return
 			}
 
+			// append issue opened
 			data = append([]map[string]interface{}{{
-				"id":         nil,
+				"id":         nil, // <<< ATTENTION NIL
 				"node_id":    nil,
 				"event":      "opened",
 				"actor":      issue.User,
@@ -203,6 +204,11 @@ func GetIssueEvents(name string, page int32, auth string) ([]map[string]interfac
 				"involve":    name,
 				"url":        nil,
 			}}, data...)
+
+			// reverse
+			for i, j := 0, len(data)-1; i < j; i, j = i+1, j-1 {
+				data[i], data[j] = data[j], data[i]
+			}
 
 			mu.Lock()
 			events = append(events, data...)
@@ -225,15 +231,26 @@ func GetIssueEvents(name string, page int32, auth string) ([]map[string]interfac
 	}
 	events = tempEvents
 
-	sort.Slice(events, func(i, j int) bool {
+	sort.SliceStable(events, func(i, j int) bool {
+		// create_at
 		cti, oki := events[i]["created_at"]
 		ctj, okj := events[j]["created_at"]
-		if !oki || !okj {
-			return false
+		if !oki {
+			return false // j > i(x)
+		}
+		if !okj {
+			return true // i > j(x)
 		}
 		ti, eri := time.Parse(time.RFC3339, cti.(string))
 		tj, erj := time.Parse(time.RFC3339, ctj.(string))
-		return eri == nil && erj == nil && ti.Unix() > tj.Unix()
+		if eri != nil {
+			return false // j > i(x)
+		}
+		if erj != nil {
+			return true // i > j(x)
+		}
+
+		return ti.Unix() > tj.Unix()
 	})
 
 	l := int32(len(events))
