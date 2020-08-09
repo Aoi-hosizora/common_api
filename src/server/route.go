@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/Aoi-hosizora/common_api/src/common/result"
+	"github.com/Aoi-hosizora/common_api/src/controller"
 	"github.com/gin-gonic/gin"
 )
 
@@ -17,6 +18,9 @@ func initRoute(engine *gin.Engine) {
 		result.Ok().SetData(&gin.H{"ping": "pong"}).JSON(c)
 	})
 
-	// gh := engine.Group("/gh")
-	// gh.GET("/users/:name/issues/timeline", controller.GetIssueTimeline)
+	{
+		githubService := controller.NewGithubService()
+		github := engine.Group("/github")
+		github.GET("/users/:name/issues/timeline", githubService.GetIssueTimeline)
+	}
 }

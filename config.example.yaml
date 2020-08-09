@@ -1,4 +1,7 @@
 meta:
-  run-mode: debug
   port: 10014
-  log-path: ./log/console.log
+  run-mode: debug
+  log-path: ./logs/
+  log-name: console
+  def-limit: 20
+  max-limit: 50

@@ -1,5 +1,22 @@
 package result
 
+import (
+	"github.com/Aoi-hosizora/goapidoc"
+)
+
+func init() {
+	goapidoc.AddDefinitions(
+		goapidoc.NewDefinition("_Page", "page response").
+			WithGenerics("T").
+			WithProperties(
+				goapidoc.NewProperty("page", "integer", true, "current page"),
+				goapidoc.NewProperty("limit", "integer", true, "page size"),
+				goapidoc.NewProperty("total", "integer", true, "data count"),
+				goapidoc.NewProperty("data", "T[]", true, "page data"),
+			),
+	)
+}
+
 type Page struct {
 	Page  int32       `json:"page"`
 	Limit int32       `json:"limit"`

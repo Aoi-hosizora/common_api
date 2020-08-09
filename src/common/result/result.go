@@ -4,10 +4,29 @@ import (
 	"github.com/Aoi-hosizora/ahlib-web/xdto"
 	"github.com/Aoi-hosizora/ahlib-web/xgin"
 	"github.com/Aoi-hosizora/common_api/src/common/exception"
+	"github.com/Aoi-hosizora/goapidoc"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
 )
+
+func init() {
+	goapidoc.AddDefinitions(
+		goapidoc.NewDefinition("Result", "global response").
+			WithProperties(
+				goapidoc.NewProperty("code", "integer#int32", true, "status code"),
+				goapidoc.NewProperty("message", "string", true, "status message"),
+			),
+
+		goapidoc.NewDefinition("_Result", "global response").
+			WithGenerics("T").
+			WithProperties(
+				goapidoc.NewProperty("code", "integer#int32", true, "status code"),
+				goapidoc.NewProperty("message", "string", true, "status message"),
+				goapidoc.NewProperty("data", "T", true, "response data"),
+			),
+	)
+}
 
 type Result struct {
 	Status  int32          `json:"-"`

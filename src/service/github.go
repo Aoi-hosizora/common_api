@@ -3,7 +3,9 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/Aoi-hosizora/ahlib/xdi"
 	"github.com/Aoi-hosizora/common_api/src/common/logger"
+	"github.com/Aoi-hosizora/common_api/src/provide/sn"
 	"math"
 	"net/http"
 	"sort"
@@ -13,6 +15,16 @@ import (
 	"time"
 )
 
+type GithubService struct {
+	httpService *HttpService
+}
+
+func NewGithubService() *GithubService {
+	return &GithubService{
+		httpService: xdi.GetByNameForce(sn.SHttpService).(*HttpService),
+	}
+}
+
 // noinspection GoSnakeCaseUsage
 const (
 	GITHUB_SEARCH_ISSUE_URL   = "https://api.github.com/search/issues?sort=%s&order=%s&q=involves:%s&page=%d&per_page=%d"
@@ -20,7 +32,7 @@ const (
 	GITHUB_ISSUE_EVENT_LIMIT  = 20
 )
 
-func GetIssueEvents(name string, page int32, auth string) ([]map[string]interface{}, error) {
+func (g *GithubService) GetIssueEvents(name string, page int32, auth string) ([]map[string]interface{}, error) {
 	header := &http.Header{}
 	if auth != "" {
 		header.Add("Authorization", auth)
@@ -33,7 +45,7 @@ func GetIssueEvents(name string, page int32, auth string) ([]map[string]interfac
 	issueUsers := make([]map[string]interface{}, 0)
 	getIssues := func(page int) (urls []string, cts []string, users []map[string]interface{}, tot int32, err error) {
 		url := fmt.Sprintf(GITHUB_SEARCH_ISSUE_URL, "updated", "desc", name, page, 100) // sort order involve page per_page
-		bs, err := HttpGet(url, header, logger.LogGhUrl)
+		bs, err := g.httpService.HttpGet(url, header, logger.LogGhUrl)
 		if err != nil {
 			return nil, nil, nil, 0, err
 		}
@@ -143,7 +155,7 @@ func GetIssueEvents(name string, page int32, auth string) ([]map[string]interfac
 	getIssuesCnt := 0
 	getIssueTimeline := func(issue *Issue) ([]map[string]interface{}, error) {
 		url := fmt.Sprintf(GITHUB_ISSUE_TIMELINE_URL, issue.Owner, issue.Repo, issue.Number, 100)
-		bs, err := HttpGet(url, header, nil)
+		bs, err := g.httpService.HttpGet(url, header, nil)
 		if err != nil {
 			return nil, err
 		}

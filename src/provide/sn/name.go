@@ -10,4 +10,8 @@ const (
 
 	// /src/common/logger/logger.go
 	SLogger xdi.ServiceName = "logger"
+
+	// /src/service/*.go
+	SHttpService   xdi.ServiceName = "http-service"
+	SGithubService xdi.ServiceName = "github-service"
 )

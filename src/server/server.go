@@ -16,8 +16,8 @@ import (
 
 func init() {
 	goapidoc.SetDocument(
-		"localhost:10015", "/",
-		goapidoc.NewInfo("gin-n-scaffold", "A go/gin (.NET core style) scaffold template", "1.0").
+		"localhost:10014", "/",
+		goapidoc.NewInfo("common_api", "My common api collection", "1.0").
 			WithContact(goapidoc.NewContact("Aoi-hosizora", "https://github.com/Aoi-hosizora", "aoihosizora@hotmail.com")),
 	)
 }

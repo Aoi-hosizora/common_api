@@ -6,5 +6,7 @@
 
 ### Project ###
 build/
+logs/*.*
+logs/*
+!.gitkeep
 config.yaml
-log/

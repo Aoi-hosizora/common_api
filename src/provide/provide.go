@@ -6,6 +6,7 @@ import (
 	"github.com/Aoi-hosizora/common_api/src/config"
 	"github.com/Aoi-hosizora/common_api/src/model/profile"
 	"github.com/Aoi-hosizora/common_api/src/provide/sn"
+	"github.com/Aoi-hosizora/common_api/src/service"
 	"log"
 )
 
@@ -23,6 +24,10 @@ func Provide(configPath string) error {
 		log.Fatalln("Failed to setup logger:", err)
 	}
 	xdi.ProvideName(sn.SLogger, lgr)
+
+	// /src/service/*.go
+	xdi.ProvideName(sn.SHttpService, service.NewHttpService())
+	xdi.ProvideName(sn.SGithubService, service.NewGithubService())
 
 	// /src/model/profile/{entity.go, property.go}
 	profile.BuildEntityMappers()
