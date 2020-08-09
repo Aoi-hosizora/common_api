@@ -2,48 +2,54 @@ package server
 
 import (
 	"fmt"
+	"github.com/Aoi-hosizora/ahlib/xdi"
+	"github.com/Aoi-hosizora/common_api/docs"
 	"github.com/Aoi-hosizora/common_api/src/config"
 	"github.com/Aoi-hosizora/common_api/src/middleware"
+	"github.com/Aoi-hosizora/common_api/src/provide/sn"
 	"github.com/Aoi-hosizora/goapidoc"
-	fiberSwagger "github.com/arsmn/fiber-swagger"
-	"github.com/gofiber/fiber"
+	"github.com/DeanThompson/ginpprof"
+	"github.com/gin-gonic/gin"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	"github.com/swaggo/gin-swagger/swaggerFiles"
 )
 
 func init() {
 	goapidoc.SetDocument(
-		"localhost:10014", "/",
-		goapidoc.NewInfo("common_api", "My common api collection", "1.0").
-			WithContact(goapidoc.NewContact("Aoi-hosizora", "https://github.com/Aoi-hosizora/", "aoihosizora@hotmail.com")),
+		"localhost:10015", "/",
+		goapidoc.NewInfo("gin-n-scaffold", "A go/gin (.NET core style) scaffold template", "1.0").
+			WithContact(goapidoc.NewContact("Aoi-hosizora", "https://github.com/Aoi-hosizora", "aoihosizora@hotmail.com")),
 	)
 }
 
 type Server struct {
-	App     *fiber.App
-	Address string
+	engine *gin.Engine
+	config *config.Config
 }
 
 func NewServer() *Server {
-	app := fiber.New()
+	cfg := xdi.GetByNameForce(sn.SConfig).(*config.Config)
+	gin.SetMode(cfg.Meta.RunMode)
+	engine := gin.New()
 
 	// mw
-	app.Use(middleware.RecoveryMiddleware())
-	app.Use(middleware.LoggerMiddleware())
-	app.Use(middleware.CorsMiddleware())
-	app.Use(middleware.CompressionMiddleware())
+	engine.Use(middleware.LoggerMiddleware())
+	engine.Use(middleware.RecoveryMiddleware())
+	engine.Use(middleware.CorsMiddleware())
 
-	// rote
-	app.Static("/swagger/doc.json", "./docs/doc.json")
-	app.Use("/swagger", fiberSwagger.New(fiberSwagger.Config{
-		URL:         fmt.Sprintf("http://localhost:%d/swagger/doc.json", config.Configs.Meta.Port),
-		DeepLinking: false,
-	}))
-	InitRoute(app)
+	// route
+	if gin.Mode() == gin.DebugMode {
+		ginpprof.Wrap(engine)
+	}
+	docs.RegisterSwag()
+	swaggerUrl := ginSwagger.URL(fmt.Sprintf("http://localhost:%d/swagger/doc.json", cfg.Meta.Port))
+	engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, swaggerUrl))
+	initRoute(engine)
 
-	return &Server{App: app}
+	return &Server{engine: engine, config: cfg}
 }
 
 func (s *Server) Serve() error {
-	addr := fmt.Sprintf("0.0.0.0:%d", config.Configs.Meta.Port)
-	s.Address = addr
-	return s.App.Listen(addr)
+	addr := fmt.Sprintf("0.0.0.0:%d", s.config.Meta.Port)
+	return s.engine.Run(addr)
 }

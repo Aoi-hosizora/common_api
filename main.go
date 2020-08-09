@@ -2,8 +2,7 @@ package main
 
 import (
 	"flag"
-	"github.com/Aoi-hosizora/common_api/src/common/logger"
-	"github.com/Aoi-hosizora/common_api/src/config"
+	"github.com/Aoi-hosizora/common_api/src/provide"
 	"github.com/Aoi-hosizora/common_api/src/server"
 	"github.com/Aoi-hosizora/goapidoc"
 	"log"
@@ -25,20 +24,17 @@ func main() {
 func run() {
 	_, err := goapidoc.GenerateJsonWithSwagger2("./docs/doc.json")
 	if err != nil {
-		log.Fatalf("Failed to generate swagger2 json: %v", err)
+		log.Fatalln("Failed to generate swagger:", err)
 	}
-	err = config.Load(*fConfig)
+
+	err = provide.Provide(*fConfig)
 	if err != nil {
-		log.Fatalln("Failed to load config:", err)
-	}
-	err = logger.Setup()
-	if err != nil {
-		log.Fatalln("Failed to setup logger:", err)
+		log.Fatalln("Failed to load some service:", err)
 	}
 
 	s := server.NewServer()
 	err = s.Serve()
 	if err != nil {
-		log.Fatalf("Failed to listen %s: %v\n", s.Address, err)
+		log.Fatalln("Failed to serve:", err)
 	}
 }

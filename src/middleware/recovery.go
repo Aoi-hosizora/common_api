@@ -1,24 +1,30 @@
 package middleware
 
 import (
-	"fmt"
+	"github.com/Aoi-hosizora/ahlib-web/xgin"
+	"github.com/Aoi-hosizora/ahlib/xdi"
 	"github.com/Aoi-hosizora/common_api/src/common/exception"
 	"github.com/Aoi-hosizora/common_api/src/common/result"
-	"github.com/gofiber/fiber"
-	"github.com/gofiber/recover"
-	"log"
+	"github.com/Aoi-hosizora/common_api/src/provide/sn"
+	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
-func RecoveryMiddleware() func(c *fiber.Ctx) {
-	skip := 4
-	return recover.New(recover.Config{
-		Handler: func(c *fiber.Ctx, err error) {
-			fmt.Println()
-			log.Println("[Recovery] panic recovered:", err)
-			r := result.Error(exception.ServerRecoveryError)
-			r.Error = exception.BuildErrorDto(err, skip, c, true)
-			r.JSON(c)
-		},
-		Log: false,
-	})
+func RecoveryMiddleware() gin.HandlerFunc {
+	lgr := xdi.GetByNameForce(sn.SLogger).(*logrus.Logger)
+	skip := 2
+
+	return func(c *gin.Context) {
+		defer func() {
+			if err := recover(); err != nil {
+				r := result.Error(exception.ServerRecoveryError)
+				if gin.Mode() == gin.DebugMode {
+					r.Error = xgin.BuildErrorDto(err, c, skip, true)
+				}
+				lgr.Errorln("[Recovery] panic recovered:", err)
+				r.JSON(c)
+			}
+		}()
+		c.Next()
+	}
 }

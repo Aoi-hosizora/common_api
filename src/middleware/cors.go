@@ -1,19 +1,15 @@
 package middleware
 
 import (
-	"github.com/Aoi-hosizora/common_api/src/config"
-	"github.com/gofiber/cors"
-	"github.com/gofiber/fiber"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 )
 
-func CorsMiddleware() func(c *fiber.Ctx) {
-	origins := []string{"*"}
-	if config.Configs.Meta.RunMode == "release" {
-		origins = []string{"http://xxx.yyy.zzz", "https://xxx.yyy.zzz"}
-	}
+func CorsMiddleware() gin.HandlerFunc {
 	return cors.New(cors.Config{
-		AllowOrigins: origins,
-		AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders: []string{"Lines-CheckBox", "Authorization", "Origin"},
+		AllowMethods:  []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:  []string{"Origin", "Content-Type", "Content-Length", "Authorization"},
+		AllowOrigins:  []string{"*"},
+		ExposeHeaders: []string{"Content-Length"},
 	})
 }

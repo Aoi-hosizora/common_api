@@ -1,54 +1,47 @@
 package result
 
 import (
-	"encoding/json"
-	"fmt"
+	"github.com/Aoi-hosizora/ahlib-web/xdto"
+	"github.com/Aoi-hosizora/ahlib-web/xgin"
 	"github.com/Aoi-hosizora/common_api/src/common/exception"
-	"github.com/Aoi-hosizora/common_api/src/config"
-	"github.com/gofiber/fiber"
+	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
 )
 
 type Result struct {
-	Code    int32               `json:"code"`
-	Message string              `json:"message"`
-	Data    interface{}         `json:"data,omitempty"`
-	Error   *exception.ErrorDto `json:"error,omitempty"`
+	Status  int32          `json:"-"`
+	Code    int32          `json:"code"`
+	Message string         `json:"message"`
+	Data    interface{}    `json:"data,omitempty"`
+	Error   *xdto.ErrorDto `json:"error,omitempty"`
 }
 
-type H map[string]interface{}
-
-func (r *Result) Marshal() ([]byte, error) {
-	if config.Configs.Meta.RunMode == "release" {
-		r.Error = nil
+func Status(status int32) *Result {
+	message := http.StatusText(int(status))
+	if status == 200 {
+		message = "success"
+	} else if message == "" {
+		message = "unknown"
 	}
-	return json.Marshal(r)
-}
-
-func (r *Result) String() string {
-	b, err := r.Marshal()
-	if err != nil {
-		return fmt.Sprintf("%v", *r)
+	return &Result{
+		Status:  status,
+		Code:    status,
+		Message: strings.ToLower(message),
 	}
-	return string(b)
-}
-
-func Status(code int32) *Result {
-	msg := http.StatusText(int(code))
-	msg = strings.ToLower(msg)
-	if code == 200 {
-		msg = "success"
-	}
-	return &Result{Code: code, Message: msg}
 }
 
 func Ok() *Result {
-	return Status(200)
+	return Status(http.StatusOK)
 }
 
-func Error(err *exception.Error) *Result {
-	return Status(err.Code).SetMessage(err.Message)
+func Error(e *exception.Error) *Result {
+	return Status(e.Code).SetMessage(e.Message)
+}
+
+func (r *Result) SetStatus(status int32) *Result {
+	r.Status = status
+	return r
 }
 
 func (r *Result) SetCode(code int32) *Result {
@@ -57,7 +50,7 @@ func (r *Result) SetCode(code int32) *Result {
 }
 
 func (r *Result) SetMessage(message string) *Result {
-	r.Message = message
+	r.Message = strings.ToLower(message)
 	return r
 }
 
@@ -66,13 +59,22 @@ func (r *Result) SetData(data interface{}) *Result {
 	return r
 }
 
-func (r *Result) SetError(err interface{}, c *fiber.Ctx) *Result {
-	r.Error = exception.BuildErrorDto(err, -1, c, false)
+func (r *Result) SetPage(page int32, limit int32, total int32, data interface{}) *Result {
+	r.Data = NewPage(page, limit, total, data)
 	return r
 }
 
-func (r *Result) JSON(c *fiber.Ctx) {
-	c.Fasthttp.Response.SetStatusCode(int(r.Code))
-	c.Fasthttp.Response.Header.SetContentType(fiber.MIMEApplicationJSON)
-	c.Fasthttp.Response.SetBodyString(r.String())
+func (r *Result) SetError(err error, c *gin.Context) *Result {
+	if gin.Mode() == gin.DebugMode {
+		r.Error = xgin.BuildBasicErrorDto(err, c)
+	}
+	return r
+}
+
+func (r *Result) JSON(c *gin.Context) {
+	c.JSON(int(r.Status), r)
+}
+
+func (r *Result) XML(c *gin.Context) {
+	c.XML(int(r.Status), r)
 }
