@@ -14,13 +14,25 @@ func initRoute(engine *gin.Engine) {
 	engine.NoMethod(func(c *gin.Context) {
 		result.Status(405).JSON(c)
 	})
+	engine.GET("/", func(c *gin.Context) {
+		result.Ok().SetData(&gin.H{"text": "Here is AoiHosizora' common api."}).JSON(c)
+	})
 	engine.GET("/ping", func(c *gin.Context) {
 		result.Ok().SetData(&gin.H{"ping": "pong"}).JSON(c)
 	})
 
+	// /default
 	{
-		githubService := controller.NewGithubService()
+		defaultController := controller.NewDefaultController()
+		def := engine.Group("/default")
+		def.GET("", defaultController.DefaultMessage)
+	}
+
+	// /github
+	{
+		githubController := controller.NewGithubController()
 		github := engine.Group("/github")
-		github.GET("/users/:name/issues/timeline", githubService.GetIssueTimeline)
+		github.GET("/rate_limit", githubController.GetRateLimit)
+		github.GET("/users/:name/issues/timeline", githubController.GetIssueTimeline)
 	}
 }

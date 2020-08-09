@@ -27,17 +27,34 @@ func NewGithubService() *GithubService {
 
 // noinspection GoSnakeCaseUsage
 const (
+	GITHUB_RATE_LIMIT_URL     = "https://api.github.com/rate_limit"
 	GITHUB_SEARCH_ISSUE_URL   = "https://api.github.com/search/issues?sort=%s&order=%s&q=involves:%s&page=%d&per_page=%d"
 	GITHUB_ISSUE_TIMELINE_URL = "https://api.github.com/repos/%s/%s/issues/%d/timeline?per_page=%d"
 	GITHUB_ISSUE_EVENT_LIMIT  = 20
 )
 
+func (g *GithubService) GetRateLimit(auth string) (map[string]interface{}, error) {
+	header := &http.Header{}
+	header.Add("Authorization", auth)
+	header.Add("Accept", "application/vnd.github.v3+json")
+
+	resp, err := g.httpService.HttpGet(GITHUB_RATE_LIMIT_URL, header, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	core := make(map[string]interface{})
+	err = json.Unmarshal(resp, &core)
+	if err != nil {
+		return nil, err
+	}
+	return core, nil
+}
+
 func (g *GithubService) GetIssueEvents(name string, page int32, auth string) ([]map[string]interface{}, error) {
 	header := &http.Header{}
-	if auth != "" {
-		header.Add("Authorization", auth)
-		header.Add("Accept", "application/vnd.github.mockingbird-preview+json")
-	}
+	header.Add("Authorization", auth)
+	header.Add("Accept", "application/vnd.github.mockingbird-preview+json")
 
 	// get user related issues
 	issueUrls := make([]string, 0)

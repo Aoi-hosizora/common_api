@@ -35,9 +35,48 @@
     }
   },
   "paths": {
+    "/default": {
+      "get": {
+        "summary": "get common api default message",
+        "operationId": "-default-get",
+        "tags": [
+          "Default"
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "originRef": "Result",
+              "$ref": "#/definitions/Result"
+            }
+          }
+        }
+      }
+    },
+    "/github/rate_limit": {
+      "get": {
+        "summary": "Get rate limit status for the authenticated user",
+        "operationId": "-github-rate_limit-get",
+        "description": "See https://docs.github.com/en/rest/reference/rate-limit",
+        "tags": [
+          "Github"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "type": "string",
+            "description": "github token, format: Token xxx"
+          }
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
     "/github/users/{name}/issues/timeline": {
       "get": {
-        "summary": "get github user issues timeline (event)",
+        "summary": "Get github user issues timeline (event)",
         "operationId": "-github-users-name-issues-timeline-get",
         "description": "Fixed field: id?, node_id?, event(enum), actor(User), commit_id?, commit_url?, created_at(time), repo(string), number(integer), involve(string)",
         "tags": [
