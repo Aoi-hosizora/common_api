@@ -19,7 +19,9 @@ func (h *HttpService) HttpRequest(method string, url string, body io.Reader, hea
 	if err != nil {
 		return nil, err
 	}
-	req.Header = *header
+	if header != nil {
+		req.Header = *header
+	}
 
 	resp, err := client.Do(req)
 	if err != nil {

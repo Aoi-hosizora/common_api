@@ -34,5 +34,6 @@ func initRoute(engine *gin.Engine) {
 		github := engine.Group("/github")
 		github.GET("/rate_limit", githubController.GetRateLimit)
 		github.GET("/users/:name/issues/timeline", githubController.GetIssueTimeline)
+		github.GET("/raw", githubController.GetRawPage)
 	}
 }

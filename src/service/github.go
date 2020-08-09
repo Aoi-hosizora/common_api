@@ -295,3 +295,12 @@ func (g *GithubService) GetIssueEvents(name string, page int32, auth string) ([]
 
 	return events, nil
 }
+
+func (g *GithubService) GetRawPage(url string) (string, error) {
+	url = "https://github.com/" + url
+	resp, err := g.httpService.HttpGet(url, nil, nil)
+	if err != nil {
+		return "", err
+	}
+	return string(resp), nil
+}

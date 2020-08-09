@@ -70,7 +70,36 @@
           }
         ],
         "responses": {
-          "200": {}
+          "200": {
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/github/raw": {
+      "get": {
+        "summary": "Get raw page without authentication",
+        "operationId": "-github-raw-get",
+        "tags": [
+          "Github"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "Github url without github.com prefix"
+          }
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "type": "string"
+            }
+          }
         }
       }
     },

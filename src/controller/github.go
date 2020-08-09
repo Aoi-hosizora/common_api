@@ -21,7 +21,7 @@ func init() {
 				goapidoc.NewHeaderParam("Authorization", "string", true, "github token, format: Token xxx"),
 			).
 			WithResponses(
-				goapidoc.NewResponse(200),
+				goapidoc.NewResponse(200).WithType("string"),
 			),
 
 		goapidoc.NewPath("GET", "/github/users/{name}/issues/timeline", "Get github user issues timeline (event)").
@@ -34,6 +34,15 @@ func init() {
 			).
 			WithResponses(
 				goapidoc.NewResponse(200).WithType("string[]"),
+			),
+
+		goapidoc.NewPath("GET", "/github/raw", "Get raw page without authentication").
+			WithTags("Github").
+			WithParams(
+				goapidoc.NewQueryParam("page", "string", true, "Github url without github.com prefix"),
+			).
+			WithResponses(
+				goapidoc.NewResponse(200).WithType("string"),
 			),
 	)
 }
@@ -91,4 +100,22 @@ func (g *GithubController) GetIssueTimeline(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, events)
+}
+
+// /github/raw?page
+func (g *GithubController) GetRawPage(c *gin.Context) {
+	page := c.DefaultQuery("page", "")
+	if page == "" {
+		result.Error(exception.RequestParamError).JSON(c)
+		return
+	}
+
+	html, err := g.githubService.GetRawPage(page)
+	if err != nil {
+		result.Error(exception.GetGithubError).SetError(err, c).JSON(c)
+		return
+	}
+
+	c.Header("Content-Type", "text/html; charset=utf-8")
+	c.String(http.StatusOK, html)
 }
