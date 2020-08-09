@@ -1,6 +1,28 @@
 {
   "basePath": "/",
-  "definitions": {},
+  "definitions": {
+    "Result": {
+      "type": "object",
+      "required": [
+        "code",
+        "message"
+      ],
+      "description": "global response",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "required": true,
+          "description": "status code",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string",
+          "required": true,
+          "description": "status message"
+        }
+      }
+    }
+  },
   "host": "localhost:10014",
   "info": {
     "title": "common_api",
@@ -8,15 +30,54 @@
     "version": "1.0",
     "contact": {
       "name": "Aoi-hosizora",
-      "url": "https://github.com/Aoi-hosizora/",
+      "url": "https://github.com/Aoi-hosizora",
       "email": "aoihosizora@hotmail.com"
     }
   },
   "paths": {
-    "/gh/users/{name}/issues/timeline": {
+    "/default": {
       "get": {
-        "summary": "get github user issues timeline (event)",
-        "operationId": "-gh-users-name-issues-timeline-get",
+        "summary": "get common api default message",
+        "operationId": "-default-get",
+        "tags": [
+          "Default"
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "originRef": "Result",
+              "$ref": "#/definitions/Result"
+            }
+          }
+        }
+      }
+    },
+    "/github/rate_limit": {
+      "get": {
+        "summary": "Get rate limit status for the authenticated user",
+        "operationId": "-github-rate_limit-get",
+        "description": "See https://docs.github.com/en/rest/reference/rate-limit",
+        "tags": [
+          "Github"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "type": "string",
+            "description": "github token, format: Token xxx"
+          }
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/github/users/{name}/issues/timeline": {
+      "get": {
+        "summary": "Get github user issues timeline (event)",
+        "operationId": "-github-users-name-issues-timeline-get",
         "description": "Fixed field: id?, node_id?, event(enum), actor(User), commit_id?, commit_url?, created_at(time), repo(string), number(integer), involve(string)",
         "tags": [
           "Github"
@@ -40,7 +101,7 @@
           {
             "name": "Authorization",
             "in": "header",
-            "required": false,
+            "required": true,
             "type": "string",
             "description": "github token, format: Token xxx"
           }
@@ -60,5 +121,5 @@
   },
   "securityDefinitions": null,
   "swagger": "2.0",
-  "tags": null
+  "tags": []
 }
