@@ -11,4 +11,5 @@ const (
 
 	SHttpService   xdi.ServiceName = "http-service"   // *service.HttpService
 	SGithubService xdi.ServiceName = "github-service" // *service.GithubService
+	SScutService   xdi.ServiceName = "scut-service"   // *service.ScutService
 )

@@ -20,9 +20,7 @@ func init() {
 			Params(
 				goapidoc.NewHeaderParam("Authorization", "string", true, "github token, format: Token xxx"),
 			).
-			Responses(
-				goapidoc.NewResponse(200, "string"),
-			),
+			Responses(goapidoc.NewResponse(200, "string")), // ...
 
 		goapidoc.NewRoutePath("GET", "/github/users/{name}/issues/timeline", "Get github user issues timeline (event)").
 			Desc("Fixed field: id?, node_id?, event(enum), actor(User), commit_id?, commit_url?, created_at(time), repo(string), number(integer), involve(string)").
@@ -32,18 +30,14 @@ func init() {
 				goapidoc.NewQueryParam("page", "integer#int32", false, "query page"),
 				goapidoc.NewHeaderParam("Authorization", "string", true, "github token, format: Token xxx"),
 			).
-			Responses(
-				goapidoc.NewResponse(200, "string[]"),
-			),
+			Responses(goapidoc.NewResponse(200, "string[]")),
 
 		goapidoc.NewRoutePath("GET", "/github/raw", "Get raw page without authentication").
 			Tags("Github").
 			Params(
 				goapidoc.NewQueryParam("page", "string", true, "Github url without github.com prefix"),
 			).
-			Responses(
-				goapidoc.NewResponse(200, "string"),
-			),
+			Responses(goapidoc.NewResponse(200, "string")),
 	)
 }
 

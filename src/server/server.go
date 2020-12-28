@@ -24,6 +24,7 @@ func init() {
 
 	goapidoc.SetTags(
 		goapidoc.NewTag("Github", "github-controller"),
+		goapidoc.NewTag("Scut", "scut-controller"),
 	)
 }
 

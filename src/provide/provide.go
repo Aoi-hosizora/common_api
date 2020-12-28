@@ -28,6 +28,7 @@ func Provide(configPath string) error {
 
 	xdi.ProvideName(sn.SHttpService, service.NewHttpService())     // *service.HttpService
 	xdi.ProvideName(sn.SGithubService, service.NewGithubService()) // *service.GithubService
+	xdi.ProvideName(sn.SScutService, service.NewScutService())     // *service.ScutService
 
 	return nil
 }

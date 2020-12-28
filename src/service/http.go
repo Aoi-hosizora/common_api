@@ -1,6 +1,7 @@
 package service
 
 import (
+	"io"
 	"io/ioutil"
 	"net/http"
 )
@@ -30,6 +31,18 @@ func (h *HttpService) DoRequest(req *http.Request) ([]byte, *http.Response, erro
 
 func (h *HttpService) HttpGet(url string, fn func(*http.Request)) ([]byte, *http.Response, error) {
 	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	if fn != nil {
+		fn(req)
+	}
+
+	return h.DoRequest(req)
+}
+
+func (h *HttpService) HttpPost(url string, body io.Reader, fn func(*http.Request)) ([]byte, *http.Response, error) {
+	req, err := http.NewRequest("POST", url, body)
 	if err != nil {
 		return nil, nil, err
 	}
