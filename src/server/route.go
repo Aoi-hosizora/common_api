@@ -1,39 +1,33 @@
 package server
 
 import (
+	"fmt"
 	"github.com/Aoi-hosizora/common_api/src/common/result"
 	"github.com/Aoi-hosizora/common_api/src/controller"
 	"github.com/gin-gonic/gin"
+	"strings"
 )
 
 func initRoute(engine *gin.Engine) {
 	engine.HandleMethodNotAllowed = true
 	engine.NoRoute(func(c *gin.Context) {
-		result.Status(404).SetMessage("route not found").JSON(c)
+		result.Status(404).SetMessage(fmt.Sprintf("route %s is not found", c.Request.URL.Path)).JSON(c)
 	})
 	engine.NoMethod(func(c *gin.Context) {
-		result.Status(405).JSON(c)
+		result.Status(405).SetMessage(fmt.Sprintf("method %s is not allowed", strings.ToUpper(c.Request.Method))).JSON(c)
 	})
 	engine.GET("/", func(c *gin.Context) {
-		result.Ok().SetData(&gin.H{"text": "Here is AoiHosizora' common api."}).JSON(c)
+		c.JSON(200, &gin.H{"message": "Welcome to aoihosizora's common_api."})
 	})
 	engine.GET("/ping", func(c *gin.Context) {
-		result.Ok().SetData(&gin.H{"ping": "pong"}).JSON(c)
+		c.JSON(200, &gin.H{"ping": "pong"})
 	})
 
-	// /default
+	githubGroup := engine.Group("/github")
 	{
-		defaultController := controller.NewDefaultController()
-		def := engine.Group("/default")
-		def.GET("", defaultController.DefaultMessage)
-	}
-
-	// /github
-	{
-		githubController := controller.NewGithubController()
-		github := engine.Group("/github")
-		github.GET("/rate_limit", githubController.GetRateLimit)
-		github.GET("/users/:name/issues/timeline", githubController.GetIssueTimeline)
-		github.GET("/raw", githubController.GetRawPage)
+		githubCtrl := controller.NewGithubController()
+		githubGroup.GET("/rate_limit", githubCtrl.GetRateLimit)
+		githubGroup.GET("/users/:name/issues/timeline", githubCtrl.GetIssueTimeline)
+		githubGroup.GET("/raw", githubCtrl.GetRawPage)
 	}
 }

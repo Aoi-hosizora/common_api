@@ -1,8 +1,8 @@
 package logger
 
 import (
+	"github.com/Aoi-hosizora/ahlib-more/xlogrus"
 	"github.com/Aoi-hosizora/ahlib/xdi"
-	"github.com/Aoi-hosizora/ahlib/xlogger"
 	"github.com/Aoi-hosizora/common_api/src/config"
 	"github.com/Aoi-hosizora/common_api/src/provide/sn"
 	"github.com/sirupsen/logrus"
@@ -20,7 +20,8 @@ func Setup() (*logrus.Logger, error) {
 
 	logger.SetLevel(logLevel)
 	logger.SetReportCaller(false)
-	logger.AddHook(xlogger.NewRotateLogHook(&xlogger.RotateLogConfig{
+	logger.SetFormatter(&xlogrus.CustomFormatter{TimestampFormat: time.RFC3339})
+	logger.AddHook(xlogrus.NewRotateLogHook(&xlogrus.RotateLogConfig{
 		MaxAge:       15 * 24 * time.Hour,
 		RotationTime: 24 * time.Hour,
 		Filepath:     c.Meta.LogPath,
@@ -28,9 +29,6 @@ func Setup() (*logrus.Logger, error) {
 		Level:        logLevel,
 		Formatter:    &logrus.JSONFormatter{TimestampFormat: time.RFC3339},
 	}))
-	logger.SetFormatter(&xlogger.CustomFormatter{
-		ForceColor: true,
-	})
 
 	return logger, nil
 }

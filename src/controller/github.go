@@ -13,36 +13,36 @@ import (
 )
 
 func init() {
-	goapidoc.AddPaths(
-		goapidoc.NewPath("GET", "/github/rate_limit", "Get rate limit status for the authenticated user").
-			WithDescription("See https://docs.github.com/en/rest/reference/rate-limit").
-			WithTags("Github").
-			WithParams(
+	goapidoc.AddRoutePaths(
+		goapidoc.NewRoutePath("GET", "/github/rate_limit", "Get rate limit status for the authenticated user").
+			Desc("See https://docs.github.com/en/rest/reference/rate-limit").
+			Tags("Github").
+			Params(
 				goapidoc.NewHeaderParam("Authorization", "string", true, "github token, format: Token xxx"),
 			).
-			WithResponses(
-				goapidoc.NewResponse(200).WithType("string"),
+			Responses(
+				goapidoc.NewResponse(200, "string"),
 			),
 
-		goapidoc.NewPath("GET", "/github/users/{name}/issues/timeline", "Get github user issues timeline (event)").
-			WithDescription("Fixed field: id?, node_id?, event(enum), actor(User), commit_id?, commit_url?, created_at(time), repo(string), number(integer), involve(string)").
-			WithTags("Github").
-			WithParams(
+		goapidoc.NewRoutePath("GET", "/github/users/{name}/issues/timeline", "Get github user issues timeline (event)").
+			Desc("Fixed field: id?, node_id?, event(enum), actor(User), commit_id?, commit_url?, created_at(time), repo(string), number(integer), involve(string)").
+			Tags("Github").
+			Params(
 				goapidoc.NewPathParam("name", "string", true, "github username"),
 				goapidoc.NewQueryParam("page", "integer#int32", false, "query page"),
 				goapidoc.NewHeaderParam("Authorization", "string", true, "github token, format: Token xxx"),
 			).
-			WithResponses(
-				goapidoc.NewResponse(200).WithType("string[]"),
+			Responses(
+				goapidoc.NewResponse(200, "string[]"),
 			),
 
-		goapidoc.NewPath("GET", "/github/raw", "Get raw page without authentication").
-			WithTags("Github").
-			WithParams(
+		goapidoc.NewRoutePath("GET", "/github/raw", "Get raw page without authentication").
+			Tags("Github").
+			Params(
 				goapidoc.NewQueryParam("page", "string", true, "Github url without github.com prefix"),
 			).
-			WithResponses(
-				goapidoc.NewResponse(200).WithType("string"),
+			Responses(
+				goapidoc.NewResponse(200, "string"),
 			),
 	)
 }
@@ -57,7 +57,7 @@ func NewGithubController() *GithubController {
 	}
 }
 
-// /github/rate_limit?page
+// GET /github/rate_limit?page
 func (g *GithubController) GetRateLimit(c *gin.Context) {
 	auth := c.GetHeader("Authorization")
 	if auth == "" {
@@ -77,7 +77,7 @@ func (g *GithubController) GetRateLimit(c *gin.Context) {
 	c.JSON(http.StatusOK, core)
 }
 
-// /github/users/:name/issues/timeline?page
+// GET /github/users/:name/issues/timeline?page
 func (g *GithubController) GetIssueTimeline(c *gin.Context) {
 	name := c.Param("name")
 	page, err := strconv.Atoi(c.Query("page"))
@@ -102,7 +102,7 @@ func (g *GithubController) GetIssueTimeline(c *gin.Context) {
 	c.JSON(http.StatusOK, events)
 }
 
-// /github/raw?page
+// GET /github/raw?page
 func (g *GithubController) GetRawPage(c *gin.Context) {
 	page := c.DefaultQuery("page", "")
 	if page == "" {

@@ -22,14 +22,18 @@ func main() {
 }
 
 func run() {
-	_, err := goapidoc.GenerateJsonWithSwagger2("./docs/doc.json")
+	_, err := goapidoc.GenerateSwaggerJson("./docs/doc.json")
 	if err != nil {
 		log.Fatalln("Failed to generate swagger:", err)
+	}
+	_, err = goapidoc.GenerateApib("./docs/doc.apib")
+	if err != nil {
+		log.Fatalln("Failed to generate api blueprint:", err)
 	}
 
 	err = provide.Provide(*fConfig)
 	if err != nil {
-		log.Fatalln("Failed to load some service:", err)
+		log.Fatalln("Failed to load some services:", err)
 	}
 
 	s := server.NewServer()

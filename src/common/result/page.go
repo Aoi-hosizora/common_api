@@ -7,8 +7,8 @@ import (
 func init() {
 	goapidoc.AddDefinitions(
 		goapidoc.NewDefinition("_Page", "page response").
-			WithGenerics("T").
-			WithProperties(
+			Generics("T").
+			Properties(
 				goapidoc.NewProperty("page", "integer", true, "current page"),
 				goapidoc.NewProperty("limit", "integer", true, "page size"),
 				goapidoc.NewProperty("total", "integer", true, "data count"),
@@ -25,5 +25,10 @@ type Page struct {
 }
 
 func NewPage(page int32, limit int32, total int32, data interface{}) *Page {
-	return &Page{Page: page, Limit: limit, Total: total, Data: data}
+	return &Page{
+		Page:  page,
+		Limit: limit,
+		Total: total,
+		Data:  data,
+	}
 }

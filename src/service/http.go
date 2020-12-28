@@ -1,8 +1,6 @@
 package service
 
 import (
-	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 )
@@ -13,36 +11,31 @@ func NewHttpService() *HttpService {
 	return &HttpService{}
 }
 
-func (h *HttpService) HttpRequest(method string, url string, body io.Reader, header *http.Header, cb func(string)) ([]byte, error) {
-	client := http.Client{}
-	req, err := http.NewRequest(method, url, body)
-	if err != nil {
-		return nil, err
-	}
-	if header != nil {
-		req.Header = *header
-	}
-
+func (h *HttpService) DoRequest(req *http.Request) ([]byte, *http.Response, error) {
+	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+	body := resp.Body
+	defer body.Close()
 
-	if cb != nil {
-		cb(fmt.Sprintf("%d: %s", resp.StatusCode, url))
-	}
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf(resp.Status)
-	}
-
-	defer resp.Body.Close()
-	bs, err := ioutil.ReadAll(resp.Body)
+	bs, err := ioutil.ReadAll(body)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return bs, nil
+
+	return bs, resp, nil
 }
 
-func (h *HttpService) HttpGet(url string, header *http.Header, cb func(string)) ([]byte, error) {
-	return h.HttpRequest("GET", url, nil, header, cb)
+func (h *HttpService) HttpGet(url string, fn func(*http.Request)) ([]byte, *http.Response, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	if fn != nil {
+		fn(req)
+	}
+
+	return h.DoRequest(req)
 }

@@ -13,14 +13,14 @@ import (
 func init() {
 	goapidoc.AddDefinitions(
 		goapidoc.NewDefinition("Result", "global response").
-			WithProperties(
+			Properties(
 				goapidoc.NewProperty("code", "integer#int32", true, "status code"),
 				goapidoc.NewProperty("message", "string", true, "status message"),
 			),
 
 		goapidoc.NewDefinition("_Result", "global response").
-			WithGenerics("T").
-			WithProperties(
+			Generics("T").
+			Properties(
 				goapidoc.NewProperty("code", "integer#int32", true, "status code"),
 				goapidoc.NewProperty("message", "string", true, "status message"),
 				goapidoc.NewProperty("data", "T", true, "response data"),
@@ -55,7 +55,7 @@ func Ok() *Result {
 }
 
 func Error(e *exception.Error) *Result {
-	return Status(e.Code).SetMessage(e.Message)
+	return Status(e.Status).SetCode(e.Code).SetMessage(e.Message)
 }
 
 func (r *Result) SetStatus(status int32) *Result {
@@ -84,16 +84,21 @@ func (r *Result) SetPage(page int32, limit int32, total int32, data interface{})
 }
 
 func (r *Result) SetError(err error, c *gin.Context) *Result {
-	if gin.Mode() == gin.DebugMode {
-		r.Error = xgin.BuildBasicErrorDto(err, c)
-	}
+	rid := c.Writer.Header().Get("X-Request-Id")
+	r.Error = xgin.BuildBasicErrorDto(err, c, "request_id", rid)
 	return r
 }
 
 func (r *Result) JSON(c *gin.Context) {
+	if gin.Mode() != gin.DebugMode {
+		r.Error = nil
+	}
 	c.JSON(int(r.Status), r)
 }
 
 func (r *Result) XML(c *gin.Context) {
+	if gin.Mode() != gin.DebugMode {
+		r.Error = nil
+	}
 	c.XML(int(r.Status), r)
 }

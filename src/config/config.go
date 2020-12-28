@@ -6,12 +6,10 @@ import (
 )
 
 type MetaConfig struct {
-	Port     int32  `yaml:"port"`
-	RunMode  string `yaml:"run-mode"`
-	LogPath  string `yaml:"log-path"`
-	LogName  string `yaml:"log-name"`
-	DefLimit int32  `yaml:"def-limit"`
-	MaxLimit int32  `yaml:"max-limit"`
+	Port    int32  `yaml:"port"`
+	RunMode string `yaml:"run-mode"`
+	LogPath string `yaml:"log-path"`
+	LogName string `yaml:"log-name"`
 }
 
 type Config struct {

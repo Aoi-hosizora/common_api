@@ -10,11 +10,16 @@ import (
 )
 
 func LoggerMiddleware() gin.HandlerFunc {
-	lgr := xdi.GetByNameForce(sn.SLogger).(*logrus.Logger)
+	logger := xdi.GetByNameForce(sn.SLogger).(*logrus.Logger)
 
 	return func(c *gin.Context) {
 		start := time.Now()
 		c.Next()
-		xgin.LoggerWithLogrus(lgr, start, c)
+
+		rid := c.Writer.Header().Get("X-Request-Id")
+		xgin.WithLogrus(logger, start, c,
+			xgin.WithExtraString(rid),
+			xgin.WithExtraFields(map[string]interface{}{"requestID": rid}),
+		)
 	}
 }

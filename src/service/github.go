@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Aoi-hosizora/ahlib/xdi"
-	"github.com/Aoi-hosizora/common_api/src/common/logger"
 	"github.com/Aoi-hosizora/common_api/src/provide/sn"
 	"math"
 	"net/http"
@@ -34,17 +33,16 @@ const (
 )
 
 func (g *GithubService) GetRateLimit(auth string) (map[string]interface{}, error) {
-	header := &http.Header{}
-	header.Add("Authorization", auth)
-	header.Add("Accept", "application/vnd.github.v3+json")
-
-	resp, err := g.httpService.HttpGet(GITHUB_RATE_LIMIT_URL, header, nil)
+	bs, _, err := g.httpService.HttpGet(GITHUB_RATE_LIMIT_URL, func(r *http.Request) {
+		r.Header.Add("Authorization", auth)
+		r.Header.Add("Accept", "application/vnd.github.v3+json")
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	core := make(map[string]interface{})
-	err = json.Unmarshal(resp, &core)
+	err = json.Unmarshal(bs, &core)
 	if err != nil {
 		return nil, err
 	}
@@ -52,17 +50,16 @@ func (g *GithubService) GetRateLimit(auth string) (map[string]interface{}, error
 }
 
 func (g *GithubService) GetIssueEvents(name string, page int32, auth string) ([]map[string]interface{}, error) {
-	header := &http.Header{}
-	header.Add("Authorization", auth)
-	header.Add("Accept", "application/vnd.github.mockingbird-preview+json")
-
 	// get user related issues
 	issueUrls := make([]string, 0)
 	issueCts := make([]string, 0)
 	issueUsers := make([]map[string]interface{}, 0)
 	getIssues := func(page int) (urls []string, cts []string, users []map[string]interface{}, tot int32, err error) {
 		url := fmt.Sprintf(GITHUB_SEARCH_ISSUE_URL, "updated", "desc", name, page, 100) // sort order involve page per_page
-		bs, err := g.httpService.HttpGet(url, header, logger.LogGhUrl)
+		bs, _, err := g.httpService.HttpGet(url, func(r *http.Request) {
+			r.Header.Add("Authorization", auth)
+			r.Header.Add("Accept", "application/vnd.github.mockingbird-preview+json")
+		})
 		if err != nil {
 			return nil, nil, nil, 0, err
 		}
@@ -172,7 +169,10 @@ func (g *GithubService) GetIssueEvents(name string, page int32, auth string) ([]
 	getIssuesCnt := 0
 	getIssueTimeline := func(issue *Issue) ([]map[string]interface{}, error) {
 		url := fmt.Sprintf(GITHUB_ISSUE_TIMELINE_URL, issue.Owner, issue.Repo, issue.Number, 100)
-		bs, err := g.httpService.HttpGet(url, header, nil)
+		bs, _, err := g.httpService.HttpGet(url, func(r *http.Request) {
+			r.Header.Add("Authorization", auth)
+			r.Header.Add("Accept", "application/vnd.github.mockingbird-preview+json")
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -249,7 +249,6 @@ func (g *GithubService) GetIssueEvents(name string, page int32, auth string) ([]
 	if err != nil {
 		return nil, err
 	}
-	logger.LogGhUrl(fmt.Sprintf("get issue event count: %d", getIssuesCnt))
 
 	// filter issue event
 	tempEvents := make([]map[string]interface{}, 0)
@@ -298,9 +297,9 @@ func (g *GithubService) GetIssueEvents(name string, page int32, auth string) ([]
 
 func (g *GithubService) GetRawPage(url string) (string, error) {
 	url = "https://github.com/" + url
-	resp, err := g.httpService.HttpGet(url, nil, nil)
+	bs, _, err := g.httpService.HttpGet(url, nil)
 	if err != nil {
 		return "", err
 	}
-	return string(resp), nil
+	return string(bs), nil
 }

@@ -2,23 +2,28 @@ package server
 
 import (
 	"fmt"
+	"github.com/Aoi-hosizora/ahlib-web/xgin"
 	"github.com/Aoi-hosizora/ahlib/xdi"
 	"github.com/Aoi-hosizora/common_api/docs"
 	"github.com/Aoi-hosizora/common_api/src/config"
 	"github.com/Aoi-hosizora/common_api/src/middleware"
 	"github.com/Aoi-hosizora/common_api/src/provide/sn"
 	"github.com/Aoi-hosizora/goapidoc"
-	"github.com/DeanThompson/ginpprof"
 	"github.com/gin-gonic/gin"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
+	"net/http"
 )
 
 func init() {
 	goapidoc.SetDocument(
 		"localhost:10014", "/",
 		goapidoc.NewInfo("common_api", "My common api collection", "1.0").
-			WithContact(goapidoc.NewContact("Aoi-hosizora", "https://github.com/Aoi-hosizora", "aoihosizora@hotmail.com")),
+			Contact(goapidoc.NewContact("Aoi-hosizora", "https://github.com/Aoi-hosizora", "aoihosizora@hotmail.com")),
+	)
+
+	goapidoc.SetTags(
+		goapidoc.NewTag("Github", "github-controller"),
 	)
 }
 
@@ -33,17 +38,18 @@ func NewServer() *Server {
 	engine := gin.New()
 
 	// mw
+	engine.Use(middleware.RequestIdMiddleware())
 	engine.Use(middleware.LoggerMiddleware())
 	engine.Use(middleware.RecoveryMiddleware())
 	engine.Use(middleware.CorsMiddleware())
 
 	// route
 	if gin.Mode() == gin.DebugMode {
-		ginpprof.Wrap(engine)
+		xgin.PprofWrap(engine)
 	}
 	docs.RegisterSwag()
-	swaggerUrl := ginSwagger.URL(fmt.Sprintf("http://localhost:%d/swagger/doc.json", cfg.Meta.Port))
-	engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, swaggerUrl))
+	engine.GET("/v1/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.URL("doc.json")))
+	engine.GET("/v1/swagger", func(c *gin.Context) { c.Redirect(http.StatusPermanentRedirect, "/v1/swagger/index.html") })
 	initRoute(engine)
 
 	return &Server{engine: engine, config: cfg}
