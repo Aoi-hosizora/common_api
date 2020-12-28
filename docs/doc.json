@@ -1,29 +1,7 @@
 {
-  "basePath": "/",
-  "definitions": {
-    "Result": {
-      "type": "object",
-      "required": [
-        "code",
-        "message"
-      ],
-      "description": "global response",
-      "properties": {
-        "code": {
-          "type": "integer",
-          "required": true,
-          "description": "status code",
-          "format": "int32"
-        },
-        "message": {
-          "type": "string",
-          "required": true,
-          "description": "status message"
-        }
-      }
-    }
-  },
+  "swagger": "2.0",
   "host": "localhost:10014",
+  "basePath": "/",
   "info": {
     "title": "common_api",
     "description": "My common api collection",
@@ -34,24 +12,17 @@
       "email": "aoihosizora@hotmail.com"
     }
   },
-  "paths": {
-    "/default": {
-      "get": {
-        "summary": "get common api default message",
-        "operationId": "-default-get",
-        "tags": [
-          "Default"
-        ],
-        "responses": {
-          "200": {
-            "schema": {
-              "originRef": "Result",
-              "$ref": "#/definitions/Result"
-            }
-          }
-        }
-      }
+  "tags": [
+    {
+      "name": "Github",
+      "description": "github-controller"
     },
+    {
+      "name": "Scut",
+      "description": "scut-controller"
+    }
+  ],
+  "paths": {
     "/github/rate_limit": {
       "get": {
         "summary": "Get rate limit status for the authenticated user",
@@ -146,9 +117,169 @@
           }
         }
       }
+    },
+    "/scut/jw": {
+      "get": {
+        "summary": "Get scut jw",
+        "operationId": "-scut-jw-get",
+        "tags": [
+          "Scut"
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "originRef": "_Result<_Page<ScutPostItemDto>>",
+              "$ref": "#/definitions/_Result<_Page<ScutPostItemDto>>"
+            }
+          }
+        }
+      }
+    },
+    "/scut/se": {
+      "get": {
+        "summary": "Get scut se",
+        "operationId": "-scut-se-get",
+        "tags": [
+          "Scut"
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "originRef": "_Result<_Page<ScutPostItemDto>>",
+              "$ref": "#/definitions/_Result<_Page<ScutPostItemDto>>"
+            }
+          }
+        }
+      }
     }
   },
-  "securityDefinitions": null,
-  "swagger": "2.0",
-  "tags": []
+  "definitions": {
+    "Result": {
+      "type": "object",
+      "required": [
+        "code",
+        "message"
+      ],
+      "description": "global response",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "required": true,
+          "description": "status code",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string",
+          "required": true,
+          "description": "status message"
+        }
+      }
+    },
+    "ScutPostItemDto": {
+      "type": "object",
+      "required": [
+        "title",
+        "url",
+        "mobile_url",
+        "type",
+        "date"
+      ],
+      "description": "Scut post response",
+      "properties": {
+        "title": {
+          "type": "string",
+          "required": true,
+          "description": "post title"
+        },
+        "url": {
+          "type": "string",
+          "required": true,
+          "description": "post url"
+        },
+        "mobile_url": {
+          "type": "string",
+          "required": true,
+          "description": "post url in mobile"
+        },
+        "type": {
+          "type": "string",
+          "required": true,
+          "description": "post type, is some specific strings"
+        },
+        "date": {
+          "type": "string",
+          "required": true,
+          "description": "post date, format: 0000-00-00",
+          "format": "date"
+        }
+      }
+    },
+    "_Page<ScutPostItemDto>": {
+      "type": "object",
+      "required": [
+        "page",
+        "limit",
+        "total",
+        "data"
+      ],
+      "description": "page response",
+      "properties": {
+        "page": {
+          "type": "integer",
+          "required": true,
+          "description": "current page",
+          "format": "int32"
+        },
+        "limit": {
+          "type": "integer",
+          "required": true,
+          "description": "page size",
+          "format": "int32"
+        },
+        "total": {
+          "type": "integer",
+          "required": true,
+          "description": "data count",
+          "format": "int32"
+        },
+        "data": {
+          "type": "array",
+          "required": true,
+          "description": "page data",
+          "items": {
+            "originRef": "ScutPostItemDto",
+            "$ref": "#/definitions/ScutPostItemDto"
+          }
+        }
+      }
+    },
+    "_Result<_Page<ScutPostItemDto>>": {
+      "type": "object",
+      "required": [
+        "code",
+        "message",
+        "data"
+      ],
+      "description": "global response",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "required": true,
+          "description": "status code",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string",
+          "required": true,
+          "description": "status message"
+        },
+        "data": {
+          "required": true,
+          "description": "response data",
+          "originRef": "_Page\u003cScutPostItemDto\u003e",
+          "$ref": "#/definitions/_Page\u003cScutPostItemDto\u003e"
+        }
+      }
+    }
+  }
 }

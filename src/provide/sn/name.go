@@ -5,13 +5,11 @@ import (
 )
 
 const (
-	// /src/config/config.go
-	SConfig xdi.ServiceName = "config"
+	// common
+	SConfig xdi.ServiceName = "config" // *config.Config
+	SLogger xdi.ServiceName = "logger" // *logrus.Logger
 
-	// /src/common/logger/logger.go
-	SLogger xdi.ServiceName = "logger"
-
-	// /src/service/*.go
-	SHttpService   xdi.ServiceName = "http-service"
-	SGithubService xdi.ServiceName = "github-service"
+	SHttpService   xdi.ServiceName = "http-service"   // *service.HttpService
+	SGithubService xdi.ServiceName = "github-service" // *service.GithubService
+	SScutService   xdi.ServiceName = "scut-service"   // *service.ScutService
 )
