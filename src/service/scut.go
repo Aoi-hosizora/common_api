@@ -30,9 +30,8 @@ func (s *ScutService) GetJwItems() ([]*vo.ScutPostItem, error) {
 	form.Add("pageNum", "1")
 	form.Add("pageSize", "50")
 	form.Add("keyword", "")
-	formBody := strings.NewReader(form.Encode())
-	bs, _, err := s.httpService.HttpPost(static.SCUT_JW_API_URL, formBody, func(r *http.Request) {
-		r.Header.Set("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8")
+	bs, _, err := s.httpService.HttpPost(static.SCUT_JW_API_URL, strings.NewReader(form.Encode()), func(r *http.Request) {
+		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		r.Header.Set("User-Agent", static.SCUT_JW_USER_AGENT)
 		r.Header.Set("Referer", static.SCUT_JW_REFERER)
 	})
@@ -62,10 +61,11 @@ func (s *ScutService) GetJwItems() ([]*vo.ScutPostItem, error) {
 	out := make([]*vo.ScutPostItem, len(items.List))
 	for i, item := range items.List {
 		out[i] = &vo.ScutPostItem{
-			Title: item.Title,
-			Url:   fmt.Sprintf(static.SCUT_JW_ITEM_URL, item.Id),
-			Type:  static.SCUT_JW_TAG_NAMES[item.Tag-1],
-			Date:  strings.ReplaceAll(item.CreateTime, ".", "-"), // 2020-01-01
+			Title:     item.Title,
+			Url:       fmt.Sprintf(static.SCUT_JW_ITEM_URL, item.Id),
+			MobileUrl: fmt.Sprintf(static.SCUT_JW_ITEM_MOBILE_URL, item.Id),
+			Type:      static.SCUT_JW_TAG_NAMES[item.Tag-1],
+			Date:      strings.ReplaceAll(item.CreateTime, ".", "-"), // 2020-01-01
 		}
 	}
 
@@ -100,12 +100,14 @@ func (s *ScutService) GetSeItems() ([]*vo.ScutPostItem, error) {
 		news := make([]*vo.ScutPostItem, lis.Size())
 		lis.Each(func(i int, s *goquery.Selection) {
 			a := s.Find(".news_title a")
+			u := fmt.Sprintf(static.SCUT_SE_ITEM_URL, a.AttrOr("href", ""))
 			meta := s.Find("span.news_meta")
 			news[i] = &vo.ScutPostItem{
-				Title: a.Text(),
-				Url:   fmt.Sprintf(static.SCUT_SE_ITEM_URL, a.AttrOr("href", "")),
-				Type:  "软院" + item.TagName,
-				Date:  meta.Text(), // 2019-10-01
+				Title:     a.Text(),
+				Url:       u,
+				MobileUrl: u,
+				Type:      "软院" + item.TagName,
+				Date:      meta.Text(), // 2019-10-01
 			}
 		})
 		out = append(out, news...)

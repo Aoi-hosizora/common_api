@@ -97,6 +97,54 @@ Fixed field: id?, node_id?, event(enum), actor(User), commit_id?, commit_url?, c
 
     + Body
 
+# Group Scut
+
+scut-controller
+
+## Get scut jw [/scut/jw]
+
+### Get scut jw [GET]
+
+`GET /scut/jw`
+
++ Request (application/json)
+
+    + Attributes
+
+    + Headers
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (_Result<_Page<ScutPostItemDto>>)
+
+    + Headers
+
+    + Body
+
+## Get scut se [/scut/se]
+
+### Get scut se [GET]
+
+`GET /scut/se`
+
++ Request (application/json)
+
+    + Attributes
+
+    + Headers
+
+    + Body
+
++ Response 200 (application/json)
+
+    + Attributes (_Result<_Page<ScutPostItemDto>>)
+
+    + Headers
+
+    + Body
+
 # Data Structures
 
 ## Result (object)
@@ -104,3 +152,29 @@ Fixed field: id?, node_id?, event(enum), actor(User), commit_id?, commit_url?, c
 + code (number, required) - status code
     (format: int32)
 + message (string, required) - status message
+
+## ScutPostItemDto (object)
+
++ title (string, required) - post title
++ url (string, required) - post url
++ mobile_url (string, required) - post url in mobile
++ type (string, required) - post type, is some specific strings
++ date (string, required) - post date, format: 0000-00-00
+    (format: date)
+
+## _Result<_Page<ScutPostItemDto>> (object)
+
++ code (number, required) - status code
+    (format: int32)
++ message (string, required) - status message
++ data (_Page<ScutPostItemDto>, required) - response data
+
+## _Page<ScutPostItemDto> (object)
+
++ page (number, required) - current page
+    (format: int32)
++ limit (number, required) - page size
+    (format: int32)
++ total (number, required) - data count
+    (format: int32)
++ data (array[ScutPostItemDto], required) - page data

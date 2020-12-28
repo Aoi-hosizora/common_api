@@ -20,3 +20,9 @@ var (
 	GetGithubIssueTimelineError = New(500, se(), "get github issue timeline failed")
 	GetGithubRawPageError       = New(500, se(), "get github raw page error")
 )
+
+// scut
+var (
+	GetScutJwError = New(500, se(), "get scut jw failed")
+	GetScutSeError = New(500, se(), "get scut se failed")
+)

@@ -23,18 +23,18 @@ func initRoute(engine *gin.Engine) {
 		c.JSON(200, &gin.H{"ping": "pong"})
 	})
 
-	githubGroup := engine.Group("/github")
+	githubGroup := engine.Group("github")
 	{
 		githubCtrl := controller.NewGithubController()
-		githubGroup.GET("/rate_limit", githubCtrl.GetRateLimit)
-		githubGroup.GET("/users/:name/issues/timeline", githubCtrl.GetIssueTimeline)
-		githubGroup.GET("/raw", githubCtrl.GetRawPage)
+		githubGroup.GET("rate_limit", githubCtrl.GetRateLimit)
+		githubGroup.GET("users/:name/issues/timeline", githubCtrl.GetIssueTimeline)
+		githubGroup.GET("raw", githubCtrl.GetRawPage)
 	}
 
-	scutGroup := engine.Group("/scut")
+	scutGroup := engine.Group("scut")
 	{
 		scutCtrl := controller.NewScutController()
-		_ = scutCtrl
-		_ = scutGroup
+		scutGroup.GET("jw", scutCtrl.GetJwItems)
+		scutGroup.GET("se", scutCtrl.GetSeItems)
 	}
 }
