@@ -16,5 +16,7 @@ var (
 
 // github
 var (
-	GetGithubError = New(500, se(), "get github failed")
+	GetGithubRateLimitError     = New(500, se(), "get github rate limit failed")
+	GetGithubIssueTimelineError = New(500, se(), "get github issue timeline failed")
+	GetGithubRawPageError       = New(500, se(), "get github raw page error")
 )

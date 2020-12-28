@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/Aoi-hosizora/ahlib/xdi"
 	"github.com/Aoi-hosizora/common_api/src/provide/sn"
+	"github.com/Aoi-hosizora/common_api/src/static"
 	"math"
 	"net/http"
 	"sort"
@@ -24,29 +25,21 @@ func NewGithubService() *GithubService {
 	}
 }
 
-// noinspection GoSnakeCaseUsage
-const (
-	GITHUB_RATE_LIMIT_URL     = "https://api.github.com/rate_limit"
-	GITHUB_SEARCH_ISSUE_URL   = "https://api.github.com/search/issues?sort=%s&order=%s&q=involves:%s&page=%d&per_page=%d"
-	GITHUB_ISSUE_TIMELINE_URL = "https://api.github.com/repos/%s/%s/issues/%d/timeline?per_page=%d"
-	GITHUB_ISSUE_EVENT_LIMIT  = 20
-)
-
 func (g *GithubService) GetRateLimit(auth string) (map[string]interface{}, error) {
-	bs, _, err := g.httpService.HttpGet(GITHUB_RATE_LIMIT_URL, func(r *http.Request) {
+	bs, _, err := g.httpService.HttpGet(static.GITHUB_RATE_LIMIT_URL, func(r *http.Request) {
 		r.Header.Add("Authorization", auth)
-		r.Header.Add("Accept", "application/vnd.github.v3+json")
+		r.Header.Add("Accept", static.GITHUB_ACCEPT)
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	core := make(map[string]interface{})
-	err = json.Unmarshal(bs, &core)
+	data := make(map[string]interface{})
+	err = json.Unmarshal(bs, &data)
 	if err != nil {
 		return nil, err
 	}
-	return core, nil
+	return data, nil
 }
 
 func (g *GithubService) GetIssueEvents(name string, page int32, auth string) ([]map[string]interface{}, error) {
@@ -55,10 +48,10 @@ func (g *GithubService) GetIssueEvents(name string, page int32, auth string) ([]
 	issueCts := make([]string, 0)
 	issueUsers := make([]map[string]interface{}, 0)
 	getIssues := func(page int) (urls []string, cts []string, users []map[string]interface{}, tot int32, err error) {
-		url := fmt.Sprintf(GITHUB_SEARCH_ISSUE_URL, "updated", "desc", name, page, 100) // sort order involve page per_page
+		url := fmt.Sprintf(static.GITHUB_ISSUE_SEARCH_URL, "updated", "desc", name, page, 100) // sort order involve page per_page
 		bs, _, err := g.httpService.HttpGet(url, func(r *http.Request) {
 			r.Header.Add("Authorization", auth)
-			r.Header.Add("Accept", "application/vnd.github.mockingbird-preview+json")
+			r.Header.Add("Accept", static.GITHUB_ACCEPT_PREVIEW)
 		})
 		if err != nil {
 			return nil, nil, nil, 0, err
@@ -66,11 +59,11 @@ func (g *GithubService) GetIssueEvents(name string, page int32, auth string) ([]
 
 		data := &struct {
 			TotalCount int32 `json:"total_count"`
-			Items      []*struct { // 30
+			Items      []*struct {
 				HtmlUrl   string                 `json:"html_url"`
 				CreatedAt string                 `json:"created_at"`
 				User      map[string]interface{} `json:"user"`
-			} `json:"items"`
+			} `json:"items"` // 30
 		}{}
 		err = json.Unmarshal(bs, data)
 		if err != nil {
@@ -99,39 +92,39 @@ func (g *GithubService) GetIssueEvents(name string, page int32, auth string) ([]
 
 	perPage := int32(len(issueUrls))
 	pageCnt := int(math.Ceil(float64(tot) / float64(perPage)))
-	enoughCnt := (page + 1) * GITHUB_ISSUE_EVENT_LIMIT
+	enoughCnt := (page + 1) * static.GITHUB_DEFAULT_ISSUE_LIMIT
 	if perPage < enoughCnt && pageCnt > 1 { // not enough && has next page
-		wg := &sync.WaitGroup{}
-		mu := &sync.Mutex{}
-		wg.Add(pageCnt - 1)
-
-		var err error
+		wg := sync.WaitGroup{}
+		mu := sync.Mutex{}
+		once := sync.Once{}
+		errOnce := error(nil)
 		for i := 2; i <= pageCnt; i++ {
-			go func(i int, err *error) {
-				if *err != nil || int32(len(issueUrls)) >= enoughCnt { // enough
-					wg.Done()
+			wg.Add(1)
+			go func(i int) {
+				defer wg.Done()
+
+				mu.Lock()
+				l := len(issueUrls)
+				mu.Unlock()
+				if int32(l) >= enoughCnt { // enough
+					return
+				}
+				pageUrls, pageCts, pageUsers, _, err := getIssues(i)
+				if err != nil {
+					once.Do(func() { errOnce = err })
 					return
 				}
 
-				pageUrls, pageCts, pageUsers, _, e := getIssues(i)
-				if e != nil {
-					mu.Lock()
-					*err = e
-					mu.Unlock()
-					wg.Done()
-					return
-				}
 				mu.Lock()
 				issueUrls = append(issueUrls, pageUrls...)
 				issueCts = append(issueCts, pageCts...)
 				issueUsers = append(issueUsers, pageUsers...)
 				mu.Unlock()
-				wg.Done()
-			}(i, &err)
+			}(i)
 		}
 		wg.Wait()
-		if err != nil {
-			return nil, err
+		if errOnce != nil {
+			return nil, errOnce
 		}
 	}
 	if int32(len(issueUrls)) >= enoughCnt { // enough new
@@ -146,7 +139,6 @@ func (g *GithubService) GetIssueEvents(name string, page int32, auth string) ([]
 		CreatedAt string
 		User      map[string]interface{}
 	}
-
 	issues := make([]*Issue, 0)
 	for idx, url := range issueUrls {
 		sp := strings.Split(url, "/") // https://github.com/gofiber/fiber/issues/556
@@ -168,10 +160,10 @@ func (g *GithubService) GetIssueEvents(name string, page int32, auth string) ([]
 	// get issue events
 	getIssuesCnt := 0
 	getIssueTimeline := func(issue *Issue) ([]map[string]interface{}, error) {
-		url := fmt.Sprintf(GITHUB_ISSUE_TIMELINE_URL, issue.Owner, issue.Repo, issue.Number, 100)
+		url := fmt.Sprintf(static.GITHUB_ISSUE_TIMELINE_URL, issue.Owner, issue.Repo, issue.Number, 100)
 		bs, _, err := g.httpService.HttpGet(url, func(r *http.Request) {
 			r.Header.Add("Authorization", auth)
-			r.Header.Add("Accept", "application/vnd.github.mockingbird-preview+json")
+			r.Header.Add("Accept", static.GITHUB_ACCEPT_PREVIEW)
 		})
 		if err != nil {
 			return nil, err
@@ -198,24 +190,18 @@ func (g *GithubService) GetIssueEvents(name string, page int32, auth string) ([]
 	}
 
 	events := make([]map[string]interface{}, 0)
-	mu := &sync.Mutex{}
-	wg := &sync.WaitGroup{}
-	wg.Add(len(issues))
-
-	err = nil
+	wg := sync.WaitGroup{}
+	mu := sync.Mutex{}
+	once := sync.Once{}
+	errOnce := error(nil)
 	for _, issue := range issues {
-		go func(issue *Issue, page int32, err *error) {
-			if *err != nil {
-				wg.Done()
-				return
-			}
+		wg.Add(1)
+		go func(issue *Issue, page int32) {
+			defer wg.Done()
 
 			data, e := getIssueTimeline(issue)
 			if e != nil {
-				mu.Lock()
-				*err = e
-				mu.Unlock()
-				wg.Done()
+				once.Do(func() { errOnce = err })
 				return
 			}
 
@@ -242,12 +228,11 @@ func (g *GithubService) GetIssueEvents(name string, page int32, auth string) ([]
 			mu.Lock()
 			events = append(events, data...)
 			mu.Unlock()
-			wg.Done()
-		}(issue, page, &err)
+		}(issue, page)
 	}
 	wg.Wait()
-	if err != nil {
-		return nil, err
+	if errOnce != nil {
+		return nil, errOnce
 	}
 
 	// filter issue event
@@ -282,8 +267,8 @@ func (g *GithubService) GetIssueEvents(name string, page int32, auth string) ([]
 	})
 
 	l := int32(len(events))
-	from := GITHUB_ISSUE_EVENT_LIMIT * (page - 1)
-	to := GITHUB_ISSUE_EVENT_LIMIT * page
+	from := static.GITHUB_DEFAULT_ISSUE_LIMIT * (page - 1)
+	to := static.GITHUB_DEFAULT_ISSUE_LIMIT * page
 	if from >= l {
 		return []map[string]interface{}{}, nil
 	}

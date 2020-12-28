@@ -48,8 +48,8 @@ func NewServer() *Server {
 		xgin.PprofWrap(engine)
 	}
 	docs.RegisterSwag()
-	engine.GET("/v1/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.URL("doc.json")))
-	engine.GET("/v1/swagger", func(c *gin.Context) { c.Redirect(http.StatusPermanentRedirect, "/v1/swagger/index.html") })
+	engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.URL("doc.json")))
+	engine.GET("/swagger", func(c *gin.Context) { c.Redirect(http.StatusPermanentRedirect, "/swagger/index.html") })
 	initRoute(engine)
 
 	return &Server{engine: engine, config: cfg}

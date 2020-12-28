@@ -61,7 +61,7 @@ func NewGithubController() *GithubController {
 func (g *GithubController) GetRateLimit(c *gin.Context) {
 	auth := c.GetHeader("Authorization")
 	if auth == "" {
-		auth = c.DefaultQuery("Authorization", "")
+		auth = c.DefaultQuery("token", "")
 		if auth == "" {
 			result.Error(exception.RequestParamError).JSON(c)
 			return
@@ -70,7 +70,7 @@ func (g *GithubController) GetRateLimit(c *gin.Context) {
 
 	core, err := g.githubService.GetRateLimit(auth)
 	if err != nil {
-		result.Error(exception.GetGithubError).SetError(err, c).JSON(c)
+		result.Error(exception.GetGithubRateLimitError).SetError(err, c).JSON(c)
 		return
 	}
 
@@ -86,7 +86,7 @@ func (g *GithubController) GetIssueTimeline(c *gin.Context) {
 	}
 	auth := c.GetHeader("Authorization")
 	if auth == "" {
-		auth = c.DefaultQuery("Authorization", "")
+		auth = c.DefaultQuery("token", "")
 		if auth == "" {
 			result.Error(exception.RequestParamError).JSON(c)
 			return
@@ -95,7 +95,7 @@ func (g *GithubController) GetIssueTimeline(c *gin.Context) {
 
 	events, err := g.githubService.GetIssueEvents(name, int32(page), auth)
 	if err != nil {
-		result.Error(exception.GetGithubError).SetError(err, c).JSON(c)
+		result.Error(exception.GetGithubIssueTimelineError).SetError(err, c).JSON(c)
 		return
 	}
 
@@ -105,14 +105,10 @@ func (g *GithubController) GetIssueTimeline(c *gin.Context) {
 // GET /github/raw?page
 func (g *GithubController) GetRawPage(c *gin.Context) {
 	page := c.DefaultQuery("page", "")
-	if page == "" {
-		result.Error(exception.RequestParamError).JSON(c)
-		return
-	}
 
 	html, err := g.githubService.GetRawPage(page)
 	if err != nil {
-		result.Error(exception.GetGithubError).SetError(err, c).JSON(c)
+		result.Error(exception.GetGithubRawPageError).SetError(err, c).JSON(c)
 		return
 	}
 

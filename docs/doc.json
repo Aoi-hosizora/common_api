@@ -1,29 +1,7 @@
 {
-  "basePath": "/",
-  "definitions": {
-    "Result": {
-      "type": "object",
-      "required": [
-        "code",
-        "message"
-      ],
-      "description": "global response",
-      "properties": {
-        "code": {
-          "type": "integer",
-          "required": true,
-          "description": "status code",
-          "format": "int32"
-        },
-        "message": {
-          "type": "string",
-          "required": true,
-          "description": "status message"
-        }
-      }
-    }
-  },
+  "swagger": "2.0",
   "host": "localhost:10014",
+  "basePath": "/",
   "info": {
     "title": "common_api",
     "description": "My common api collection",
@@ -34,24 +12,13 @@
       "email": "aoihosizora@hotmail.com"
     }
   },
+  "tags": [
+    {
+      "name": "Github",
+      "description": "github-controller"
+    }
+  ],
   "paths": {
-    "/default": {
-      "get": {
-        "summary": "get common api default message",
-        "operationId": "-default-get",
-        "tags": [
-          "Default"
-        ],
-        "responses": {
-          "200": {
-            "schema": {
-              "originRef": "Result",
-              "$ref": "#/definitions/Result"
-            }
-          }
-        }
-      }
-    },
     "/github/rate_limit": {
       "get": {
         "summary": "Get rate limit status for the authenticated user",
@@ -148,7 +115,27 @@
       }
     }
   },
-  "securityDefinitions": null,
-  "swagger": "2.0",
-  "tags": []
+  "definitions": {
+    "Result": {
+      "type": "object",
+      "required": [
+        "code",
+        "message"
+      ],
+      "description": "global response",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "required": true,
+          "description": "status code",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string",
+          "required": true,
+          "description": "status message"
+        }
+      }
+    }
+  }
 }
