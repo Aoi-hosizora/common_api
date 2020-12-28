@@ -30,4 +30,11 @@ func initRoute(engine *gin.Engine) {
 		githubGroup.GET("/users/:name/issues/timeline", githubCtrl.GetIssueTimeline)
 		githubGroup.GET("/raw", githubCtrl.GetRawPage)
 	}
+
+	scutGroup := engine.Group("/scut")
+	{
+		scutCtrl := controller.NewScutController()
+		_ = scutCtrl
+		_ = scutGroup
+	}
 }
