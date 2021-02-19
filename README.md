@@ -1,12 +1,11 @@
 # common_api
 
-+ AoiHosizora used personal common api.
-+ Document see https://localhost:10014/swagger/index.html or https://aoihosizoracommonapi.docs.apiary.io/
++ Some small common private apis, used for AoiHosizora.
 
 ### Endpoints
 
-+ GET `/github/rate_limit`
-+ GET `/github/users/{name}/issues/timeline`
-+ GET `/github/raw`
-+ GET `/scut/jw`
-+ GET `/scut/se`
++ `GET /github/rate_limit`
++ `GET /github/users/{name}/issues/timeline`
++ `GET /github/raw`
++ `GET /scut/jw`
++ `GET /scut/se`

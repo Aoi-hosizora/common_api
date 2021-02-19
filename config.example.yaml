@@ -1,5 +1,6 @@
 meta:
   port: 10014
   run-mode: debug
-  log-path: ./logs/
-  log-name: console
+  log-name: ./logs/console
+  bucket-cap: 20
+  bucket-qua: 10
