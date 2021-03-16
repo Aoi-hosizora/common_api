@@ -24,6 +24,26 @@ func NewScutService() *ScutService {
 	}
 }
 
+func (s *ScutService) PingJw() error {
+	form := &url.Values{}
+	form.Add("tag", "0")
+	form.Add("pageNum", "1")
+	form.Add("pageSize", "50")
+	form.Add("keyword", "")
+	_, resp, err := s.httpService.HttpPost(static.SCUT_JW_API_URL, strings.NewReader(form.Encode()), func(r *http.Request) {
+		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		r.Header.Set("User-Agent", static.SCUT_JW_USER_AGENT)
+		r.Header.Set("Referer", static.SCUT_JW_REFERER)
+	})
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != 200 {
+		return errStatusNotOk
+	}
+	return nil
+}
+
 func (s *ScutService) GetJwItems() ([]*vo.ScutPostItem, error) {
 	form := &url.Values{}
 	form.Add("tag", "0")
@@ -70,6 +90,17 @@ func (s *ScutService) GetJwItems() ([]*vo.ScutPostItem, error) {
 	}
 
 	return out, nil
+}
+
+func (s *ScutService) PingSe() error {
+	_, resp, err := s.httpService.HttpGet(fmt.Sprintf(static.SCUT_SE_WEB_URL, static.SCUT_SE_TAG_PARTS[0]), nil)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != 200 {
+		return errStatusNotOk
+	}
+	return nil
 }
 
 func (s *ScutService) GetSeItems() ([]*vo.ScutPostItem, error) {

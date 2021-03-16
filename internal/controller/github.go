@@ -14,6 +14,10 @@ import (
 
 func init() {
 	goapidoc.AddRoutePaths(
+		goapidoc.NewRoutePath("GET", "/github/ping", "Ping github").
+			Tags("Github").
+			Responses(goapidoc.NewResponse(200, "Result")),
+
 		goapidoc.NewRoutePath("GET", "/github/rate_limit", "Get rate limit status for the authenticated user").
 			Desc("See https://api.github.com/en/rest/reference/rate-limit").
 			Tags("Github").
@@ -49,6 +53,16 @@ func NewGithubController() *GithubController {
 	return &GithubController{
 		githubService: xmodule.MustGetByName(sn.SGithubService).(*service.GithubService),
 	}
+}
+
+// GET /github/ping
+func (g *GithubController) Ping(c *gin.Context) {
+	err := g.githubService.Ping()
+	if err != nil {
+		result.Error(exception.PingError).SetError(err, c).JSON(c)
+		return
+	}
+	result.Ok().JSON(c)
 }
 
 // GET /github/rate_limit?page

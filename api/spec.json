@@ -23,6 +23,23 @@
     }
   ],
   "paths": {
+    "/github/ping": {
+      "get": {
+        "summary": "Ping github",
+        "operationId": "-github-ping-get",
+        "tags": [
+          "Github"
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "originRef": "Result",
+              "$ref": "#/definitions/Result"
+            }
+          }
+        }
+      }
+    },
     "/github/rate_limit": {
       "get": {
         "summary": "Get rate limit status for the authenticated user",
@@ -135,6 +152,23 @@
         }
       }
     },
+    "/scut/jw/ping": {
+      "get": {
+        "summary": "Ping scut jw",
+        "operationId": "-scut-jw-ping-get",
+        "tags": [
+          "Scut"
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "originRef": "Result",
+              "$ref": "#/definitions/Result"
+            }
+          }
+        }
+      }
+    },
     "/scut/se": {
       "get": {
         "summary": "Get scut se",
@@ -147,6 +181,23 @@
             "schema": {
               "originRef": "_Result<_Page<ScutPostItemDto>>",
               "$ref": "#/definitions/_Result<_Page<ScutPostItemDto>>"
+            }
+          }
+        }
+      }
+    },
+    "/scut/se/ping": {
+      "get": {
+        "summary": "Ping scut se",
+        "operationId": "-scut-se-ping-get",
+        "tags": [
+          "Scut"
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "originRef": "Result",
+              "$ref": "#/definitions/Result"
             }
           }
         }

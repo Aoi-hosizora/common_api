@@ -12,6 +12,7 @@ func new5(s int32, m string) *Error { errno5++; return New(s, errno5, m) }
 var (
 	RequestParamError   = new4(400, "request param error")
 	ServerRecoveryError = new5(500, "server unknown error")
+	PingError           = new5(500, "ping error")
 )
 
 // github

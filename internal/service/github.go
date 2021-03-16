@@ -25,6 +25,17 @@ func NewGithubService() *GithubService {
 	}
 }
 
+func (g *GithubService) Ping() error {
+	_, resp, err := g.httpService.HttpGet(static.GITHUB_API_URL, nil)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != 200 {
+		return errStatusNotOk
+	}
+	return nil
+}
+
 func (g *GithubService) GetRateLimit(auth string) (map[string]interface{}, error) {
 	bs, _, err := g.httpService.HttpGet(static.GITHUB_RATE_LIMIT_URL, func(r *http.Request) {
 		r.Header.Add("Authorization", auth)

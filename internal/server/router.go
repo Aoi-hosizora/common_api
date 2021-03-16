@@ -29,6 +29,7 @@ func setupRouter(engine *gin.Engine) {
 	githubGroup := engine.Group("github")
 	{
 		githubCtrl := controller.NewGithubController()
+		githubGroup.GET("ping", githubCtrl.Ping)
 		githubGroup.GET("rate_limit", githubCtrl.GetRateLimit)
 		githubGroup.GET("users/:name/issues/timeline", githubCtrl.GetIssueTimeline)
 		githubGroup.GET("raw", githubCtrl.GetRawPage)
@@ -37,7 +38,9 @@ func setupRouter(engine *gin.Engine) {
 	scutGroup := engine.Group("scut")
 	{
 		scutCtrl := controller.NewScutController()
+		scutGroup.GET("jw/ping", scutCtrl.PingJw)
 		scutGroup.GET("jw", scutCtrl.GetJwItems)
+		scutGroup.GET("se/ping", scutCtrl.PingSe)
 		scutGroup.GET("se", scutCtrl.GetSeItems)
 	}
 }

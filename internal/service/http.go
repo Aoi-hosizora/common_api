@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"github.com/Aoi-hosizora/ahlib-more/xcharset"
 	"golang.org/x/text/encoding"
 	"io"
@@ -13,6 +14,8 @@ type HttpService struct{}
 func NewHttpService() *HttpService {
 	return &HttpService{}
 }
+
+var errStatusNotOk = errors.New("service: status code is not 200")
 
 func (h *HttpService) DoRequest(req *http.Request) ([]byte, *http.Response, error) {
 	client := &http.Client{}
