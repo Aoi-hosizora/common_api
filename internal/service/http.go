@@ -1,6 +1,8 @@
 package service
 
 import (
+	"context"
+	"github.com/Aoi-hosizora/ahlib-web/xgin/headers"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -29,15 +31,29 @@ func (h *HttpService) DoRequest(req *http.Request) ([]byte, *http.Response, erro
 	return bs, resp, nil
 }
 
+const contentType = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36"
+
 func (h *HttpService) HttpGet(url string, fn func(*http.Request)) ([]byte, *http.Response, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, nil, err
 	}
+	req.Header.Add(headers.ContentType, contentType)
 	if fn != nil {
 		fn(req)
 	}
+	return h.DoRequest(req)
+}
 
+func (h *HttpService) HttpGetWithCtx(ctx context.Context, url string, fn func(*http.Request)) ([]byte, *http.Response, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	req.Header.Add(headers.ContentType, contentType)
+	if fn != nil {
+		fn(req)
+	}
 	return h.DoRequest(req)
 }
 
@@ -46,9 +62,9 @@ func (h *HttpService) HttpPost(url string, body io.Reader, fn func(*http.Request
 	if err != nil {
 		return nil, nil, err
 	}
+	req.Header.Add(headers.ContentType, contentType)
 	if fn != nil {
 		fn(req)
 	}
-
 	return h.DoRequest(req)
 }

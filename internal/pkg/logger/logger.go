@@ -36,8 +36,8 @@ func Setup() (*logrus.Logger, error) {
 		return nil, err
 	}
 	logger.AddHook(xlogrus.NewRotationHook(rotation,
-		xlogrus.WithLevel(level),
-		xlogrus.WithFormatter(xlogrus.RFC3339JsonFormatter()),
+		xlogrus.WithRotateLevel(level),
+		xlogrus.WithRotateFormatter(xlogrus.RFC3339JsonFormatter()),
 	))
 
 	return logger, nil

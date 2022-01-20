@@ -1,24 +1,24 @@
 package dto
 
 import (
-	"github.com/Aoi-hosizora/common_api/internal/model/vo"
+	"github.com/Aoi-hosizora/common_api/internal/model/biz"
 	"github.com/Aoi-hosizora/goapidoc"
 )
 
 func init() {
 	goapidoc.AddDefinitions(
-		goapidoc.NewDefinition("ScutPostItemDto", "Scut post response").
+		goapidoc.NewDefinition("ScutNoticeItemDto", "Scut notice item response").
 			Properties(
-				goapidoc.NewProperty("title", "string", true, "post title"),
-				goapidoc.NewProperty("url", "string", true, "post url"),
-				goapidoc.NewProperty("mobile_url", "string", true, "post url in mobile"),
-				goapidoc.NewProperty("type", "string", true, "post type, is some specific strings"),
-				goapidoc.NewProperty("date", "string#date", true, "post date, format: 0000-00-00"),
+				goapidoc.NewProperty("title", "string", true, "notice title"),
+				goapidoc.NewProperty("url", "string", true, "notice url"),
+				goapidoc.NewProperty("mobile_url", "string", true, "notice url in mobile"),
+				goapidoc.NewProperty("type", "string", true, "notice type, is some specific strings"),
+				goapidoc.NewProperty("date", "string#date", true, "notice date, format: 0000-00-00"),
 			),
 	)
 }
 
-type ScutPostItemDto struct {
+type ScutNoticeItemDto struct {
 	Title     string `json:"title"`
 	Url       string `json:"url"`
 	MobileUrl string `json:"mobile_url"`
@@ -26,8 +26,8 @@ type ScutPostItemDto struct {
 	Date      string `json:"date"`
 }
 
-func BuildScutPostItemDto(item *vo.ScutPostItem) *ScutPostItemDto {
-	return &ScutPostItemDto{
+func BuildScutNoticeItemDto(item *biz.ScutNoticeItem) *ScutNoticeItemDto {
+	return &ScutNoticeItemDto{
 		Title:     item.Title,
 		Url:       item.Url,
 		MobileUrl: item.MobileUrl,
@@ -36,10 +36,10 @@ func BuildScutPostItemDto(item *vo.ScutPostItem) *ScutPostItemDto {
 	}
 }
 
-func BuildScutPostItemDtos(items []*vo.ScutPostItem) []*ScutPostItemDto {
-	out := make([]*ScutPostItemDto, len(items))
+func BuildScutNoticeItemDtos(items []*biz.ScutNoticeItem) []*ScutNoticeItemDto {
+	out := make([]*ScutNoticeItemDto, len(items))
 	for idx, item := range items {
-		out[idx] = BuildScutPostItemDto(item)
+		out[idx] = BuildScutNoticeItemDto(item)
 	}
 	return out
 }

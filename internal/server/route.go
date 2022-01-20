@@ -41,6 +41,8 @@ func setupRoutes(engine *gin.Engine) {
 	githubGroup.GET("users/:name/issues/timeline", githubController.GetIssueTimeline)
 
 	scutGroup := engine.Group("scut")
-	scutGroup.GET("jw", scutController.GetJwItems)
-	scutGroup.GET("se", scutController.GetSeItems)
+	scutGroup.GET("notice/jw", scutController.GetJwNotices)
+	scutGroup.GET("notice/se", scutController.GetSeNotices)
+	scutGroup.GET("notice/gr", scutController.GetGrNotices)
+	scutGroup.GET("notice/gzic", scutController.GetGzicNotices)
 }

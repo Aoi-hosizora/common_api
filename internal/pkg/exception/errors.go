@@ -16,12 +16,14 @@ var (
 
 // GitHub related
 var (
-	GetGithubRateLimitError     = new5(500, "get github rate limit failed")
-	GetGithubIssueTimelineError = new5(500, "get github issue timeline failed")
+	GithubQueryRateLimitError     = new5(500, "failed to query github rate limit")     // 50001
+	GithubQueryIssueTimelineError = new5(500, "failed to query github issue timeline") // 50002
 )
 
 // SCUT related
 var (
-	GetScutJwError = new5(500, "get scut jw failed")
-	GetScutSeError = new5(500, "get scut se failed")
+	ScutQueryJwNoticesError   = new5(500, "failed to query scut jw notices")   // 50003
+	ScutQuerySeNoticesError   = new5(500, "failed to query scut se notices")   // 50004
+	ScutQueryGrNoticesError   = new5(500, "failed to query scut gr notices")   // 50005
+	ScutQueryGzicNoticesError = new5(500, "failed to query scut gzic notices") // 50006
 )

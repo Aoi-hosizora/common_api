@@ -1,11 +1,12 @@
 # common_api
 
-+ Some small common private apis, used for AoiHosizora.
++ AoiHosizora's common api collection.
 
 ### Endpoints
 
 + `GET /github/rate_limit`
-+ `GET /github/users/{name}/issues/timeline`
-+ `GET /github/raw`
-+ `GET /scut/jw`
-+ `GET /scut/se`
++ `GET /users/:name/issues/timeline`
++ `GET /scut/notice/jw`
++ `GET /scut/notice/se`
++ `GET /scut/notice/gw`
++ `GET /scut/notice/gzic`

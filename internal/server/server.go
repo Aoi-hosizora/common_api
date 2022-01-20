@@ -72,7 +72,7 @@ func NewServer() (*Server, error) {
 	if cfg.Meta.Swagger {
 		api.RegisterSwagger()
 		engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.URL("doc.json")))
-		engine.GET("/swagger", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/v1/swagger/index.html") })
+		engine.GET("/swagger", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/swagger/index.html") })
 	}
 	setupRoutes(engine)
 
@@ -101,6 +101,13 @@ func (s *Server) Serve() {
 		}
 	}()
 
+	hp, hsp, _ := xgin.GetProxyEnv()
+	if hp != "" {
+		log.Printf("[Gin] Using http proxy: %s", hp)
+	}
+	if hsp != "" {
+		log.Printf("[Gin] Using https proxy: %s", hsp)
+	}
 	log.Printf("[Gin] Listening and serving HTTP on %s", addr)
 	err := server.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {

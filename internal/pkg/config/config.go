@@ -20,8 +20,6 @@ type MetaConfig struct {
 
 	BucketCap int64 `yaml:"bucket-cap" default:"200" validate:"gt=0"`
 	BucketQua int64 `yaml:"bucket-qua" default:"100" validate:"gt=0"`
-	DefLimit  int32 `yaml:"def-limit"  default:"20"  validate:"gt=0"`
-	MaxLimit  int32 `yaml:"max-limit"  default:"50"  validate:"gt=0"`
 }
 
 var _debugMode = true

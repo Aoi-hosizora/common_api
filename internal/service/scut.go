@@ -2,10 +2,13 @@ package service
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/Aoi-hosizora/ahlib-web/xgin/headers"
+	"github.com/Aoi-hosizora/ahlib/xerror"
 	"github.com/Aoi-hosizora/ahlib/xmodule"
-	"github.com/Aoi-hosizora/common_api/internal/model/vo"
+	"github.com/Aoi-hosizora/common_api/internal/model/biz"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/module/sn"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/static"
 	"github.com/PuerkitoBio/goquery"
@@ -24,94 +27,170 @@ func NewScutService() *ScutService {
 	}
 }
 
-func (s *ScutService) GetJwItems() ([]*vo.ScutPostItem, error) {
+func (s *ScutService) GetJwNotices() ([]*biz.ScutNoticeItem, error) {
 	form := &url.Values{}
-	form.Add("tag", "0")
+	form.Add("category", "0")
+	form.Add("tag", "0") // all tags
 	form.Add("pageNum", "1")
 	form.Add("pageSize", "50")
 	form.Add("keyword", "")
-	bs, _, err := s.httpService.HttpPost(static.SCUT_JW_API_URL, strings.NewReader(form.Encode()), func(r *http.Request) {
-		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		r.Header.Set("User-Agent", static.SCUT_JW_USER_AGENT)
-		r.Header.Set("Referer", static.SCUT_JW_REFERER)
+	bs, _, err := s.httpService.HttpPost(static.ScutJwApi, strings.NewReader(form.Encode()), func(r *http.Request) {
+		r.Header.Set(headers.Cookie, static.ScutJwCookie)
+		r.Header.Set(headers.ContentType, static.ScutJwContentType)
+		r.Header.Set(headers.Origin, static.ScutJwOrigin)
+		r.Header.Set(headers.Referer, static.ScutJwReferer)
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	items := &struct {
+	type Result struct {
 		List []*struct {
-			CreateTime string `json:"createTime"`
 			Id         string `json:"id"`
+			CreateTime string `json:"createTime"`
+			Title      string `json:"title"`
 			IsNew      bool   `json:"isNew"`
 			Tag        int    `json:"tag"`
-			Title      string `json:"title"`
 		} `json:"list"`
-		Message string `json:"message"`
-		PageNum int    `json:"pagenum"`
-		Row     int    `json:"row"`
-		Success bool   `json:"success"`
-		Total   int    `json:"total"`
-	}{}
+	}
+	items := &Result{}
 	err = json.Unmarshal(bs, items)
 	if err != nil {
 		return nil, err
 	}
 
-	out := make([]*vo.ScutPostItem, len(items.List))
-	for i, item := range items.List {
-		out[i] = &vo.ScutPostItem{
-			Title:     item.Title,
-			Url:       fmt.Sprintf(static.SCUT_JW_ITEM_URL, item.Id),
-			MobileUrl: fmt.Sprintf(static.SCUT_JW_ITEM_MOBILE_URL, item.Id),
-			Type:      static.SCUT_JW_TAG_NAMES[item.Tag-1],
-			Date:      strings.ReplaceAll(item.CreateTime, ".", "-"), // 2020-01-01
-		}
+	out := make([]*biz.ScutNoticeItem, 0, len(items.List))
+	for _, item := range items.List {
+		u := fmt.Sprintf(static.ScutJwNoticeUrl, item.Id)
+		mu := fmt.Sprintf(static.ScutJwNoticeMobileUrl, item.Id)
+		t := strings.ReplaceAll(item.CreateTime, ".", "-") // 2020.01.01 -> 2020-01-01
+		out = append(out, biz.NewScutNoticeItem(item.Title, u, mu, static.ScutJwTagNames[item.Tag], t))
 	}
-
+	biz.SortScutNoticeItems(out)
 	return out, nil
 }
 
-func (s *ScutService) GetSeItems() ([]*vo.ScutPostItem, error) {
-	type Item struct {
-		TagName string            // <<
-		Doc     *goquery.Document // <<
-	}
+type scutTagWithDoc struct {
+	tag string
+	doc *goquery.Document
+}
 
-	items := make([]*Item, len(static.SCUT_SE_TAG_PARTS))
-	for idx, part := range static.SCUT_SE_TAG_PARTS {
-		u := fmt.Sprintf(static.SCUT_SE_WEB_URL, part)
-		bs, _, err := s.httpService.HttpGet(u, func(r *http.Request) {
-			r.Header.Set("User-Agent", static.SCUT_SE_USER_AGENT)
-		})
-		if err != nil {
-			return nil, err
-		}
-		doc, err := goquery.NewDocumentFromReader(bytes.NewReader(bs))
-		if err != nil {
-			return nil, err
-		}
-		items[idx] = &Item{TagName: static.SCUT_SE_TAG_NAMES[idx], Doc: doc}
-	}
-
-	out := make([]*vo.ScutPostItem, 0)
-	for _, item := range items {
-		lis := item.Doc.Find("ul.news_ul > li.news_li")
-		news := make([]*vo.ScutPostItem, lis.Size())
-		lis.Each(func(i int, s *goquery.Selection) {
-			a := s.Find(".news_title a")
-			u := fmt.Sprintf(static.SCUT_SE_ITEM_URL, a.AttrOr("href", ""))
-			meta := s.Find("span.news_meta")
-			news[i] = &vo.ScutPostItem{
-				Title:     a.Text(),
-				Url:       u,
-				MobileUrl: u,
-				Type:      "软院" + item.TagName,
-				Date:      meta.Text(), // 2019-10-01
+func (s *ScutService) GetSeNotices() ([]*biz.ScutNoticeItem, error) {
+	pairs := make([]scutTagWithDoc, len(static.ScutSeTagParts))
+	eg := xerror.WithCancel(context.Background())
+	eg.SetGoExecutor(xerror.DefaultExecutor)
+	for idx, part := range static.ScutSeTagParts {
+		pairs[idx].tag = static.ScutSeTagNames[idx]
+		idx, part := idx, part
+		eg.Go(func(ctx context.Context) error {
+			bs, _, err := s.httpService.HttpGetWithCtx(ctx, fmt.Sprintf(static.ScutSeWebUrl, part), nil)
+			if err != nil {
+				return err
 			}
+			doc, err := goquery.NewDocumentFromReader(bytes.NewReader(bs))
+			if err != nil {
+				return err
+			}
+			pairs[idx].doc = doc
+			return nil
 		})
-		out = append(out, news...)
+	}
+	err := eg.Wait()
+	if err != nil {
+		return nil, err
 	}
 
+	out := make([]*biz.ScutNoticeItem, 0)
+	for _, pair := range pairs {
+		pair.doc.Find("ul.news_ul > li.news_li").Each(func(i int, li *goquery.Selection) {
+			a := li.Find("span.news_title a")
+			meta := li.Find("span.news_meta") // 2019-10-01
+			href := fmt.Sprintf(static.ScutSeNoticeWebUrl, a.AttrOr("href", ""))
+			out = append(out, biz.NewScutNoticeItem(a.Text(), href, href, "软院"+pair.tag, meta.Text()))
+		})
+	}
+	biz.SortScutNoticeItems(out)
+	return out, nil
+}
+
+func (s *ScutService) GetGrNotices() ([]*biz.ScutNoticeItem, error) {
+	const pages = 2
+	docs := make([]*goquery.Document, pages)
+	eg := xerror.WithCancel(context.Background())
+	eg.SetGoExecutor(xerror.DefaultExecutor)
+	for i := 0; i < pages; i++ {
+		i := i
+		eg.Go(func(ctx context.Context) error {
+			bs, _, err := s.httpService.HttpGetWithCtx(ctx, fmt.Sprintf(static.ScutGrWebUrl, i+1), nil)
+			if err != nil {
+				return err
+			}
+			doc, err := goquery.NewDocumentFromReader(bytes.NewReader(bs))
+			if err != nil {
+				return err
+			}
+			docs[i] = doc
+			return nil
+		})
+	}
+	err := eg.Wait()
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]*biz.ScutNoticeItem, 0)
+	for _, doc := range docs {
+		doc.Find("table.wp_article_list_table tr").Each(func(i int, tr *goquery.Selection) {
+			a := tr.Find("a")
+			href := fmt.Sprintf(static.ScutGrNoticeWebUrl, a.AttrOr("href", ""))
+			span := a.Find("span")
+			t := span.Text() // 2022-01-19
+			span.Remove()
+			out = append(out, biz.NewScutNoticeItem(a.Text(), href, href, "研究生院"+static.ScutGrTagName, t))
+		})
+	}
+	biz.SortScutNoticeItems(out)
+	return out, nil
+}
+
+func (s *ScutService) GetGzicNotices() ([]*biz.ScutNoticeItem, error) {
+	pairs := make([]scutTagWithDoc, len(static.ScutGzicTagParts))
+	eg := xerror.WithCancel(context.Background())
+	eg.SetGoExecutor(xerror.DefaultExecutor)
+	for idx, part := range static.ScutGzicTagParts {
+		pairs[idx].tag = static.ScutGzicTagNames[idx]
+		idx, part := idx, part
+		eg.Go(func(ctx context.Context) error {
+			bs, _, err := s.httpService.HttpGetWithCtx(ctx, fmt.Sprintf(static.ScutGzicWebUrl, part), nil)
+			if err != nil {
+				return err
+			}
+			doc, err := goquery.NewDocumentFromReader(bytes.NewReader(bs))
+			if err != nil {
+				return err
+			}
+			pairs[idx].doc = doc
+			return nil
+		})
+	}
+	err := eg.Wait()
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]*biz.ScutNoticeItem, 0)
+	for _, pair := range pairs {
+		pair.doc.Find("div.right-nr div.row div.thr-box").Each(func(i int, div *goquery.Selection) {
+			a := div.Find("a")
+			href := a.AttrOr("href", "")
+			if strings.HasPrefix(href, "/gzic") {
+				href = fmt.Sprintf(static.ScutGzicNoticeWebUrl, href)
+			}
+			span := a.Find("span") // 2022-01-17
+			p := a.Find("p")
+			out = append(out, biz.NewScutNoticeItem(p.Text(), href, href, "GZIC"+pair.tag, span.Text()))
+		})
+	}
+	biz.SortScutNoticeItems(out)
 	return out, nil
 }

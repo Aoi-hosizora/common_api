@@ -2,5 +2,7 @@ meta:
   port: 10014
   run-mode: debug
   log-name: ./logs/console
+  swagger: true
+  host: 127.0.0.1:10014
   bucket-cap: 20
   bucket-qua: 10

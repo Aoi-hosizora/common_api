@@ -26,9 +26,9 @@ func NewGithubService() *GithubService {
 }
 
 func (g *GithubService) GetRateLimit(auth string) (map[string]interface{}, error) {
-	bs, _, err := g.httpService.HttpGet(static.GITHUB_RATE_LIMIT_URL, func(r *http.Request) {
+	bs, _, err := g.httpService.HttpGet(static.GithubRateLimitApi, func(r *http.Request) {
 		r.Header.Add("Authorization", auth)
-		r.Header.Add("Accept", static.GITHUB_ACCEPT)
+		r.Header.Add("Accept", static.GithubAccept)
 	})
 	if err != nil {
 		return nil, err
@@ -42,16 +42,16 @@ func (g *GithubService) GetRateLimit(auth string) (map[string]interface{}, error
 	return data, nil
 }
 
-func (g *GithubService) GetIssueEvents(name string, page int32, auth string) ([]map[string]interface{}, error) {
+func (g *GithubService) GetIssueTimelines(name string, page int32, auth string) ([]map[string]interface{}, error) {
 	// get user related issues
 	issueUrls := make([]string, 0)
 	issueCts := make([]string, 0)
 	issueUsers := make([]map[string]interface{}, 0)
 	getIssues := func(page int) (urls []string, cts []string, users []map[string]interface{}, tot int32, err error) {
-		url := fmt.Sprintf(static.GITHUB_ISSUE_SEARCH_URL, "updated", "desc", name, page, 100) // sort order involve page per_page
+		url := fmt.Sprintf(static.GithubIssueSearchApi, "updated", "desc", name, page, 100) // sort order involve page per_page
 		bs, _, err := g.httpService.HttpGet(url, func(r *http.Request) {
 			r.Header.Add("Authorization", auth)
-			r.Header.Add("Accept", static.GITHUB_ACCEPT_PREVIEW)
+			r.Header.Add("Accept", static.GithubAcceptPreview)
 		})
 		if err != nil {
 			return nil, nil, nil, 0, err
@@ -92,7 +92,7 @@ func (g *GithubService) GetIssueEvents(name string, page int32, auth string) ([]
 
 	perPage := int32(len(issueUrls))
 	pageCnt := int(math.Ceil(float64(tot) / float64(perPage)))
-	enoughCnt := (page + 1) * static.GITHUB_DEFAULT_ISSUE_LIMIT
+	enoughCnt := (page + 1) * static.GithubDefaultIssueLimit
 	if perPage < enoughCnt && pageCnt > 1 { // not enough && has next page
 		wg := sync.WaitGroup{}
 		mu := sync.Mutex{}
@@ -160,10 +160,10 @@ func (g *GithubService) GetIssueEvents(name string, page int32, auth string) ([]
 	// get issue events
 	getIssuesCnt := 0
 	getIssueTimeline := func(issue *Issue) ([]map[string]interface{}, error) {
-		url := fmt.Sprintf(static.GITHUB_ISSUE_TIMELINE_URL, issue.Owner, issue.Repo, issue.Number, 100)
+		url := fmt.Sprintf(static.GithubIssueTimelineApi, issue.Owner, issue.Repo, issue.Number, 100)
 		bs, _, err := g.httpService.HttpGet(url, func(r *http.Request) {
 			r.Header.Add("Authorization", auth)
-			r.Header.Add("Accept", static.GITHUB_ACCEPT_PREVIEW)
+			r.Header.Add("Accept", static.GithubAcceptPreview)
 		})
 		if err != nil {
 			return nil, err
@@ -267,8 +267,8 @@ func (g *GithubService) GetIssueEvents(name string, page int32, auth string) ([]
 	})
 
 	l := int32(len(events))
-	from := static.GITHUB_DEFAULT_ISSUE_LIMIT * (page - 1)
-	to := static.GITHUB_DEFAULT_ISSUE_LIMIT * page
+	from := static.GithubDefaultIssueLimit * (page - 1)
+	to := static.GithubDefaultIssueLimit * page
 	if from >= l {
 		return []map[string]interface{}{}, nil
 	}
