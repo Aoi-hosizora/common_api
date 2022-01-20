@@ -12,12 +12,12 @@ import (
 )
 
 func init() {
-	goapidoc.AddRoutePaths(
-		goapidoc.NewRoutePath("GET", "/scut/jw", "Get scut jw").
+	goapidoc.AddOperations(
+		goapidoc.NewGetOperation("/scut/jw", "Get scut jw").
 			Tags("Scut").
 			Responses(goapidoc.NewResponse(200, "_Result<_Page<ScutPostItemDto>>")),
 
-		goapidoc.NewRoutePath("GET", "/scut/se", "Get scut se").
+		goapidoc.NewGetOperation("/scut/se", "Get scut se").
 			Tags("Scut").
 			Responses(goapidoc.NewResponse(200, "_Result<_Page<ScutPostItemDto>>")),
 	)

@@ -23,6 +23,45 @@
     }
   ],
   "paths": {
+    "/github/proxy": {
+      "get": {
+        "summary": "Proxy the request with url, content-type and other headers",
+        "operationId": "-github-proxy-get",
+        "tags": [
+          "Github"
+        ],
+        "parameters": [
+          {
+            "name": "__url",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "Url with http:// or https:// prefix"
+          },
+          {
+            "name": "__content",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "description": "Content-type for request"
+          },
+          {
+            "name": "XXX-Example",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "description": "An example header for request"
+          }
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
     "/github/rate_limit": {
       "get": {
         "summary": "Get rate limit status for the authenticated user",
@@ -38,31 +77,6 @@
             "required": true,
             "type": "string",
             "description": "github token, format: Token xxx"
-          }
-        ],
-        "responses": {
-          "200": {
-            "schema": {
-              "type": "string"
-            }
-          }
-        }
-      }
-    },
-    "/github/raw": {
-      "get": {
-        "summary": "Get raw page without authentication",
-        "operationId": "-github-raw-get",
-        "tags": [
-          "Github"
-        ],
-        "parameters": [
-          {
-            "name": "page",
-            "in": "query",
-            "required": true,
-            "type": "string",
-            "description": "Github url without github.com prefix"
           }
         ],
         "responses": {

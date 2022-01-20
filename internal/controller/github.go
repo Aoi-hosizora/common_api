@@ -13,8 +13,8 @@ import (
 )
 
 func init() {
-	goapidoc.AddRoutePaths(
-		goapidoc.NewRoutePath("GET", "/github/rate_limit", "Get rate limit status for the authenticated user").
+	goapidoc.AddOperations(
+		goapidoc.NewGetOperation("/github/rate_limit", "Get rate limit status for the authenticated user").
 			Desc("See https://api.github.com/en/rest/reference/rate-limit").
 			Tags("Github").
 			Params(
@@ -22,7 +22,7 @@ func init() {
 			).
 			Responses(goapidoc.NewResponse(200, "string")), // ...
 
-		goapidoc.NewRoutePath("GET", "/github/users/{name}/issues/timeline", "Get github user issues timeline (event)").
+		goapidoc.NewGetOperation("/github/users/{name}/issues/timeline", "Get github user issues timeline (event)").
 			Desc("Fixed field: id?, node_id?, event(enum), actor(User), commit_id?, commit_url?, created_at(time), repo(string), number(integer), involve(string)").
 			Tags("Github").
 			Params(
@@ -31,13 +31,6 @@ func init() {
 				goapidoc.NewHeaderParam("Authorization", "string", true, "github token, format: Token xxx"),
 			).
 			Responses(goapidoc.NewResponse(200, "string[]")),
-
-		goapidoc.NewRoutePath("GET", "/github/raw", "Get raw page without authentication").
-			Tags("Github").
-			Params(
-				goapidoc.NewQueryParam("page", "string", true, "Github url without github.com prefix"),
-			).
-			Responses(goapidoc.NewResponse(200, "string")),
 	)
 }
 
@@ -94,18 +87,4 @@ func (g *GithubController) GetIssueTimeline(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, events)
-}
-
-// GET /github/raw?page
-func (g *GithubController) GetRawPage(c *gin.Context) {
-	page := c.DefaultQuery("page", "")
-
-	html, err := g.githubService.GetRawPage(page)
-	if err != nil {
-		result.Error(exception.GetGithubRawPageError).SetError(err, c).JSON(c)
-		return
-	}
-
-	c.Header("Content-Type", "text/html; charset=utf-8")
-	c.String(http.StatusOK, html)
 }

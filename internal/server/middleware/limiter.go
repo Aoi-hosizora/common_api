@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"github.com/Aoi-hosizora/ahlib-web/xgin/headers"
 	"github.com/Aoi-hosizora/ahlib/xmodule"
 	"github.com/Aoi-hosizora/ahlib/xnumber"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/config"
@@ -12,19 +13,18 @@ import (
 	"time"
 )
 
-func LimitMiddleware() gin.HandlerFunc {
+func LimiterMiddleware() gin.HandlerFunc {
 	cfg := xmodule.MustGetByName(sn.SConfig).(*config.Config).Meta
 	limiter := ratelimit.NewBucketWithQuantum(time.Second, cfg.BucketCap, cfg.BucketQua)
 	return func(c *gin.Context) {
-		c.Writer.Header().Set("X-RateLimit-Remaining", xnumber.I64toa(limiter.Available()))
-		c.Writer.Header().Set("X-RateLimit-Limit", xnumber.I64toa(limiter.Capacity()))
+		available := xnumber.I64toa(limiter.Available())
+		capacity := xnumber.I64toa(limiter.Capacity())
+		c.Header(headers.XRateLimitRemaining, available)
+		c.Header(headers.XRateLimitLimit, capacity)
 
 		if limiter.TakeAvailable(1) == 0 {
-			r := &gin.H{
-				"remaining": limiter.Available(),
-				"limit":     limiter.Capacity(),
-			}
-			result.Status(int32(http.StatusTooManyRequests)).SetData(r).JSON(c)
+			r := gin.H{"remaining": available, "limit": capacity}
+			result.Status(http.StatusTooManyRequests).SetData(r).JSON(c)
 			c.Abort()
 		}
 	}

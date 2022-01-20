@@ -10,6 +10,10 @@ import (
 )
 
 func Provide(configPath string) error {
+	// ======
+	// server
+	// ======
+
 	// *config.Config
 	cfg, err := config.Load(configPath)
 	if err != nil {

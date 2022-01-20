@@ -1,33 +1,65 @@
 package config
 
 import (
+	"github.com/Aoi-hosizora/ahlib-web/xvalidator"
+	"github.com/Aoi-hosizora/ahlib/xreflect"
 	"gopkg.in/yaml.v2"
-	"io/ioutil"
+	"os"
 )
 
 type Config struct {
-	Meta *MetaConfig `yaml:"meta"`
+	Meta *MetaConfig `yaml:"meta"  validate:"required"`
 }
 
 type MetaConfig struct {
-	Port      int32  `yaml:"port"`
-	RunMode   string `yaml:"run-mode"`
-	LogName   string `yaml:"log-name"`
-	BucketCap int64  `yaml:"bucket-cap"`
-	BucketQua int64  `yaml:"bucket-qua"`
+	Port    int32  `yaml:"port"     validate:"required"`
+	RunMode string `yaml:"run-mode" default:"debug"`
+	LogName string `yaml:"log-name" default:"./logs/console"`
+	Swagger bool   `yaml:"swagger"`
+	Host    string `yaml:"host"`
+
+	BucketCap int64 `yaml:"bucket-cap" default:"200" validate:"gt=0"`
+	BucketQua int64 `yaml:"bucket-qua" default:"100" validate:"gt=0"`
+	DefLimit  int32 `yaml:"def-limit"  default:"20"  validate:"gt=0"`
+	MaxLimit  int32 `yaml:"max-limit"  default:"50"  validate:"gt=0"`
+}
+
+var _debugMode = true
+
+func IsDebugMode() bool {
+	return _debugMode
 }
 
 func Load(path string) (*Config, error) {
-	f, err := ioutil.ReadFile(path)
+	f, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
 	cfg := &Config{}
-	err = yaml.Unmarshal(f, cfg)
-	if err != nil {
+	if err = yaml.Unmarshal(f, cfg); err != nil {
+		return nil, err
+	}
+	if _, err = xreflect.FillDefaultFields(cfg); err != nil {
+		return nil, err
+	}
+	if err = validateConfig(cfg); err != nil {
 		return nil, err
 	}
 
+	_debugMode = cfg.Meta.RunMode == "debug"
 	return cfg, nil
+}
+
+func validateConfig(cfg *Config) error {
+	val := xvalidator.NewCustomStructValidator()
+	val.SetValidatorTagName("validate")
+	val.SetMessageTagName("message")
+	xvalidator.UseTagAsFieldName(val.ValidateEngine(), "yaml")
+	err := val.ValidateStruct(cfg)
+	if err != nil {
+		ut, _ := xvalidator.ApplyTranslator(val.ValidateEngine(), xvalidator.EnLocaleTranslator(), xvalidator.EnTranslationRegisterFunc())
+		return xvalidator.FlattedMapToError(err.(*xvalidator.ValidateFieldsError).Translate(ut, false))
+	}
+	return nil
 }

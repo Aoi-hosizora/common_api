@@ -1,9 +1,10 @@
 package middleware
 
 import (
-	"github.com/Aoi-hosizora/ahlib-web/xrecovery"
+	"github.com/Aoi-hosizora/ahlib-web/xgin"
+	"github.com/Aoi-hosizora/ahlib-web/xgin/headers"
+	"github.com/Aoi-hosizora/ahlib/xcolor"
 	"github.com/Aoi-hosizora/ahlib/xmodule"
-	"github.com/Aoi-hosizora/ahlib/xruntime"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/exception"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/module/sn"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/result"
@@ -13,21 +14,22 @@ import (
 
 func RecoveryMiddleware() gin.HandlerFunc {
 	logger := xmodule.MustGetByName(sn.SLogger).(*logrus.Logger)
-	skip := 2
+	const skip = 3
 	return func(c *gin.Context) {
 		defer func() {
 			if err := recover(); err != nil {
-				r := result.Error(exception.ServerRecoveryError)
-				r.Error = exception.BuildFullErrorDto(err, c)
+				errDto, stack := exception.BuildFullErrorDto(err, c, skip) // include request info and trace stack
+				xcolor.BrightRed.Printf("\n%s\n\n", stack.String())
 
-				rid := c.Writer.Header().Get("X-Request-ID")
-				xrecovery.LogToLogrus(logger, err, xruntime.RuntimeTraceStack(skip),
-					xrecovery.WithExtraText(rid), xrecovery.WithExtraFieldsV("request_id", rid))
+				rid := c.Writer.Header().Get(headers.XRequestID)
+				options := []xgin.LoggerOption{xgin.WithExtraText(rid), xgin.WithExtraFieldsV("request_id", rid)}
+				xgin.LogRecoveryToLogger(logger, err, stack, options...)
+
+				r := result.Error(exception.ServerUnknownError)
+				r.Error = errDto
 				r.JSON(c)
 			}
 		}()
-
-		// execute the next handler
 		c.Next()
 	}
 }

@@ -1,6 +1,7 @@
 package result
 
 import (
+	"github.com/Aoi-hosizora/common_api/internal/pkg/config"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/exception"
 	"github.com/Aoi-hosizora/goapidoc"
 	"github.com/gin-gonic/gin"
@@ -79,23 +80,25 @@ func (r *Result) SetPage(page int32, limit int32, total int32, data interface{})
 	return r
 }
 
-func (r *Result) SetError(err error, c *gin.Context) *Result {
+func (r *Result) SetError(err error, ctx *gin.Context) *Result {
 	if err != nil {
-		r.Error = exception.BuildBasicErrorDto(err, c)
+		r.Error = exception.BuildBasicErrorDto(err, ctx) // include request info
 	}
 	return r
 }
 
-func (r *Result) JSON(c *gin.Context) {
-	if gin.Mode() != gin.DebugMode {
-		r.Error = nil
+func (r *Result) prehandle() {
+	if !config.IsDebugMode() && r.Error != nil {
+		r.Error = &exception.ErrorDto{Time: r.Error.Time, RequestID: r.Error.RequestID, Request: r.Error.Request}
 	}
-	c.JSON(int(r.status), r)
 }
 
-func (r *Result) XML(c *gin.Context) {
-	if gin.Mode() != gin.DebugMode {
-		r.Error = nil
-	}
-	c.XML(int(r.status), r)
+func (r *Result) JSON(ctx *gin.Context) {
+	r.prehandle()
+	ctx.JSON(int(r.status), r)
+}
+
+func (r *Result) XML(ctx *gin.Context) {
+	r.prehandle()
+	ctx.XML(int(r.status), r)
 }

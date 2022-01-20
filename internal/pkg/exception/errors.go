@@ -8,20 +8,19 @@ var (
 func new4(s int32, m string) *Error { errno4++; return New(s, errno4, m) }
 func new5(s int32, m string) *Error { errno5++; return New(s, errno5, m) }
 
-// request
+// Server related
 var (
-	RequestParamError   = new4(400, "request param error")
-	ServerRecoveryError = new5(500, "server unknown error")
+	RequestParamError  = new4(400, "request parameter error") // 40000
+	ServerUnknownError = new5(500, "server unknown error")    // 50000
 )
 
-// github
+// GitHub related
 var (
 	GetGithubRateLimitError     = new5(500, "get github rate limit failed")
 	GetGithubIssueTimelineError = new5(500, "get github issue timeline failed")
-	GetGithubRawPageError       = new5(500, "get github raw page error")
 )
 
-// scut
+// SCUT related
 var (
 	GetScutJwError = new5(500, "get scut jw failed")
 	GetScutSeError = new5(500, "get scut se failed")

@@ -72,15 +72,17 @@ Fixed field: id?, node_id?, event(enum), actor(User), commit_id?, commit_url?, c
 
     + Body
 
-## Get raw page without authentication [/github/raw{?page}]
+## Proxy the request with url, content-type and other headers [/github/proxy{?__url,__content,XXX-Example}]
 
-### Get raw page without authentication [GET]
+### Proxy the request with url, content-type and other headers [GET]
 
-`GET /github/raw`
+`GET /github/proxy`
 
 + Parameters
 
-    + page (string, required) - Github url without github.com prefix
+    + __url (string, required) - Url with http:// or https:// prefix
+    + __content (string, optional) - Content-type for request
+    + XXX-Example (string, optional) - An example header for request
 
 + Request (application/json)
 

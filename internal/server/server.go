@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/Aoi-hosizora/ahlib-web/xgin"
+	"github.com/Aoi-hosizora/ahlib/xcolor"
 	"github.com/Aoi-hosizora/ahlib/xmodule"
+	"github.com/Aoi-hosizora/ahlib/xruntime"
 	"github.com/Aoi-hosizora/common_api/api"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/config"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/module/sn"
@@ -18,96 +20,92 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 func init() {
-	host := os.Getenv("SWAGGER_HOST")
-	if host == "" {
-		host = "localhost"
-	}
-
 	goapidoc.SetDocument(
-		host+":10014", "/",
-		goapidoc.NewInfo("common_api", "Some small common apis, used for AoiHosizora.\n"+
-			"For github, please visit https://github.com/Aoi-hosizora/common_private_api", "1.0").
+		"localhost:10014", "/",
+		goapidoc.NewInfo("common_api", "AoiHosizora's common api collection.", "1.0.0").
 			Contact(goapidoc.NewContact("Aoi-hosizora", "https://github.com/Aoi-hosizora", "aoihosizora@hotmail.com")),
 	)
 
-	goapidoc.SetTags(
-		goapidoc.NewTag("Github", "github-controller"),
-		goapidoc.NewTag("Scut", "scut-controller"),
+	goapidoc.SetOption(goapidoc.NewOption().
+		Tags(
+			goapidoc.NewTag("Github", "github-controller"),
+			goapidoc.NewTag("Scut", "scut-controller"),
+		),
 	)
 }
 
 type Server struct {
 	engine *gin.Engine
-	config *config.Config
 }
 
 func NewServer() (*Server, error) {
-	cfg := xmodule.MustGetByName(sn.SConfig).(*config.Config)
-	gin.SetMode(cfg.Meta.RunMode)
-	gin.DebugPrintRouteFunc = func(httpMethod, absolutePath, handlerName string, nuHandlers int) {
-		fmt.Printf("[GIN-debug] %-6s %-30s --> %s (%d handlers)\n", httpMethod, absolutePath, handlerName, nuHandlers)
+	if config.IsDebugMode() {
+		gin.SetMode(gin.DebugMode)
+	} else {
+		gin.SetMode(gin.ReleaseMode)
 	}
-	xgin.PrintAppRouterRegisterFunc = func(index, count int, method, relativePath, handlerFuncname string, handlersCount int, layerFakePath string) {
-		pre := "├─"
-		if index == count-1 {
-			pre = "└─"
-		}
-		fmt.Printf("[XGIN]   %2s %-6s ~/%-28s --> %s (%d handlers) ==> ~/%s\n", pre, method, relativePath, handlerFuncname, handlersCount, layerFakePath)
+	gin.DebugPrintRouteFunc = func(method, path, handlerName string, numHandlers int) {
+		fmt.Printf("[Gin-debug] %s --> %s (%d handlers)\n", xcolor.Blue.Sprintf("%-6s %-30s", method, path), handlerName, numHandlers)
 	}
 
 	// server
-	engine := gin.New()
-	s := &Server{engine: engine, config: cfg}
+	engine := xgin.NewEngineWithoutDebugWarning()
 
 	// mw
-	engine.Use(middleware.RequestIdMiddleware())
+	engine.Use(middleware.RequestIDMiddleware())
 	engine.Use(middleware.LoggerMiddleware())
 	engine.Use(middleware.RecoveryMiddleware())
+	engine.Use(middleware.LimiterMiddleware())
 	engine.Use(middleware.CorsMiddleware())
-	engine.Use(middleware.LimitMiddleware())
 
 	// route
-	if gin.Mode() == gin.DebugMode {
-		xgin.PprofWrap(engine)
+	if config.IsDebugMode() {
+		restore := xgin.HideDebugPrintRoute()
+		xgin.WrapPprof(engine)
+		restore()
 	}
-	api.RegisterSwag()
-	engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.URL("doc.json")))
-	engine.GET("/swagger", func(c *gin.Context) { c.Redirect(http.StatusPermanentRedirect, "/swagger/index.html") })
-	setupRouter(engine)
+	cfg := xmodule.MustGetByName(sn.SConfig).(*config.Config)
+	if cfg.Meta.Swagger {
+		api.RegisterSwagger()
+		engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.URL("doc.json")))
+		engine.GET("/swagger", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/v1/swagger/index.html") })
+	}
+	setupRoutes(engine)
 
+	s := &Server{engine: engine}
 	return s, nil
 }
 
 func (s *Server) Serve() {
-	addr := fmt.Sprintf("0.0.0.0:%d", s.config.Meta.Port)
-	server := &http.Server{
-		Addr:    addr,
-		Handler: s.engine,
-	}
+	cfg := xmodule.MustGetByName(sn.SConfig).(*config.Config)
+	addr := fmt.Sprintf("0.0.0.0:%d", cfg.Meta.Port)
+	server := &http.Server{Addr: addr, Handler: s.engine}
 
-	closeCh := make(chan int)
+	terminated := make(chan interface{})
 	go func() {
-		signalCh := make(chan os.Signal)
-		signal.Notify(signalCh, syscall.SIGINT)
-		<-signalCh
-		log.Printf("Shutdown server by SIGINT (0x02)")
+		defer close(terminated)
+		ch := make(chan os.Signal)
+		signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
+		sig := <-ch
+		log.Printf("[Gin] Shutting down due to %s received...", xruntime.SignalName(sig.(syscall.Signal)))
 
-		err := server.Shutdown(context.Background())
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+		defer cancel()
+		err := server.Shutdown(ctx)
 		if err != nil {
-			log.Fatalln("Failed to shutdown HTTP server:", err)
+			log.Fatalln("Failed to shut down:", err)
 		}
-		closeCh <- 0
 	}()
 
-	log.Printf("Listening and serving HTTP on %s", addr)
+	log.Printf("[Gin] Listening and serving HTTP on %s", addr)
 	err := server.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
 		log.Fatalln("Failed to serve:", err)
 	}
-
-	<-closeCh
-	log.Println("HTTP server exiting...")
+	<-terminated
+	log.Println("[Gin] HTTP server is shut down successfully")
 }

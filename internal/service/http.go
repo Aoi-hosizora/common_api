@@ -1,8 +1,6 @@
 package service
 
 import (
-	"github.com/Aoi-hosizora/ahlib-more/xcharset"
-	"golang.org/x/text/encoding"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -41,19 +39,6 @@ func (h *HttpService) HttpGet(url string, fn func(*http.Request)) ([]byte, *http
 	}
 
 	return h.DoRequest(req)
-}
-
-func (h *HttpService) HttpGetWithCharset(url string, decode encoding.Encoding, fn func(*http.Request)) ([]byte, *http.Response, error) {
-	bs, resp, err := h.HttpGet(url, fn)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	bs, err = xcharset.DecodeBytes(decode, bs)
-	if err != nil {
-		return nil, nil, err
-	}
-	return bs, resp, nil
 }
 
 func (h *HttpService) HttpPost(url string, body io.Reader, fn func(*http.Request)) ([]byte, *http.Response, error) {
