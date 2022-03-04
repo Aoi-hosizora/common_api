@@ -23,7 +23,7 @@ func setupRoutes(engine *gin.Engine) {
 		c.JSON(200, gin.H{"ping": "pong"})
 	})
 	engine.GET("", func(c *gin.Context) {
-		c.JSON(200, &gin.H{"message": "Here is AoiHosizora's common-api."})
+		c.JSON(200, gin.H{"message": "Here is AoiHosizora's common api."})
 	})
 
 	// controllers
@@ -38,6 +38,7 @@ func setupRoutes(engine *gin.Engine) {
 
 	githubGroup := engine.Group("github")
 	githubGroup.GET("rate_limit", githubController.GetRateLimit)
+	githubGroup.GET("token/:token/api/*url", githubController.RequestApiWithToken)
 	githubGroup.GET("users/:name/issues/timeline", githubController.GetIssueTimeline)
 
 	scutGroup := engine.Group("scut")

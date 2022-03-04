@@ -16,7 +16,7 @@ type MetaConfig struct {
 	RunMode string `yaml:"run-mode" default:"debug"`
 	LogName string `yaml:"log-name" default:"./logs/console"`
 	Swagger bool   `yaml:"swagger"`
-	Host    string `yaml:"host"`
+	DocHost string `yaml:"doc-host"`
 
 	BucketCap int64 `yaml:"bucket-cap" default:"200" validate:"gt=0"`
 	BucketQua int64 `yaml:"bucket-qua" default:"100" validate:"gt=0"`
@@ -50,14 +50,13 @@ func Load(path string) (*Config, error) {
 }
 
 func validateConfig(cfg *Config) error {
-	val := xvalidator.NewCustomStructValidator()
-	val.SetValidatorTagName("validate")
+	val := xvalidator.NewMessagedValidator()
+	val.SetValidateTagName("validate")
 	val.SetMessageTagName("message")
-	xvalidator.UseTagAsFieldName(val.ValidateEngine(), "yaml")
-	err := val.ValidateStruct(cfg)
-	if err != nil {
-		ut, _ := xvalidator.ApplyTranslator(val.ValidateEngine(), xvalidator.EnLocaleTranslator(), xvalidator.EnTranslationRegisterFunc())
-		return xvalidator.FlattedMapToError(err.(*xvalidator.ValidateFieldsError).Translate(ut, false))
+	val.UseTagAsFieldName("yaml", "json")
+	if err := val.ValidateStruct(cfg); err != nil {
+		ut, _ := xvalidator.ApplyEnglishTranslator(val.ValidateEngine())
+		return xvalidator.MapToError(err.(*xvalidator.MultiFieldsError).Translate(ut, false))
 	}
 	return nil
 }

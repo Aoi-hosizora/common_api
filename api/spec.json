@@ -50,6 +50,39 @@
         }
       }
     },
+    "/github/token/{token}/api/{url}": {
+      "get": {
+        "summary": "Request api with given token",
+        "operationId": "-github-token-:token-api-:url-get",
+        "tags": [
+          "Github"
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "description": "github token, format: Token xxx",
+            "type": "string"
+          },
+          {
+            "name": "url",
+            "in": "path",
+            "required": true,
+            "description": "github api url without api.github.com prefix",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
     "/github/users/{name}/issues/timeline": {
       "get": {
         "summary": "Get github user issues timeline (event)",

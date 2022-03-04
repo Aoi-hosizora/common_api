@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"encoding/json"
+	"github.com/Aoi-hosizora/ahlib-web/xgin/headers"
 	"github.com/Aoi-hosizora/ahlib/xmodule"
 	"github.com/Aoi-hosizora/ahlib/xnumber"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/exception"
@@ -19,6 +21,12 @@ func init() {
 			Desc("See https://api.github.com/en/rest/reference/rate-limit").
 			Tags("Github").
 			AddParams(goapidoc.NewHeaderParam("Authorization", "string", true, "github token, format: Token xxx")).
+			Responses(goapidoc.NewResponse(200, "string")), // ...
+
+		goapidoc.NewGetOperation("/github/token/{token}/api/{url}", "Request api with given token").
+			Tags("Github").
+			AddParams(goapidoc.NewPathParam("token", "string", true, "github token, format: Token xxx")).
+			AddParams(goapidoc.NewPathParam("url", "string", true, "github api url without api.github.com prefix")).
 			Responses(goapidoc.NewResponse(200, "string")), // ...
 
 		goapidoc.NewGetOperation("/github/users/{name}/issues/timeline", "Get github user issues timeline (event)").
@@ -51,18 +59,44 @@ func (g *GithubController) token(c *gin.Context) string {
 
 // GetRateLimit GET /github/rate_limit
 func (g *GithubController) GetRateLimit(c *gin.Context) {
-	auth := g.token(c)
-	if auth == "" {
+	token := g.token(c)
+	if token == "" {
 		result.Error(exception.RequestParamError).JSON(c)
 		return
 	}
 
-	rl, err := g.githubService.GetRateLimit(auth)
+	rl, err := g.githubService.GetRateLimit(token)
 	if err != nil {
 		result.Error(exception.GithubQueryRateLimitError).SetError(err, c).JSON(c)
 		return
 	}
 	c.JSON(http.StatusOK, rl)
+}
+
+// RequestApiWithToken GET /github/token/:token/api/*url
+func (g *GithubController) RequestApiWithToken(c *gin.Context) {
+	token := strings.TrimSpace(c.Param("token"))
+	if token == "" {
+		result.Error(exception.RequestParamError).JSON(c)
+		return
+	}
+	url := strings.TrimSpace(c.Param("url"))
+	if url == "" {
+		result.Error(exception.RequestParamError).JSON(c)
+		return
+	}
+
+	bs, statusCode, header, err := g.githubService.RequestApiWithToken(url, token)
+	if err != nil {
+		result.Error(exception.GithubQueryApiResponseError).SetError(err, c).JSON(c)
+		return
+	}
+	obj := make(map[string]interface{})
+	if json.Unmarshal(bs, &obj) != nil {
+		c.Data(statusCode, header.Get(headers.ContentType), bs)
+	} else {
+		c.JSON(statusCode, gin.H{"code": statusCode, "data": obj, "headers": header})
+	}
 }
 
 // GetIssueTimeline GET /github/users/:name/issues/timeline?page

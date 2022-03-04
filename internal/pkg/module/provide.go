@@ -19,22 +19,22 @@ func Provide(configPath string) error {
 	if err != nil {
 		log.Fatalln("Failed to load config:", err)
 	}
-	xmodule.ProvideName(sn.SConfig, cfg)
+	xmodule.ProvideByName(sn.SConfig, cfg)
 
 	// *logrus.Logger
 	lgr, err := logger.Setup()
 	if err != nil {
 		log.Fatalln("Failed to setup logger:", err)
 	}
-	xmodule.ProvideName(sn.SLogger, lgr)
+	xmodule.ProvideByName(sn.SLogger, lgr)
 
 	// ========
 	// services
 	// ========
 
-	xmodule.ProvideName(sn.SHttpService, service.NewHttpService())     // *service.HttpService
-	xmodule.ProvideName(sn.SGithubService, service.NewGithubService()) // *service.GithubService
-	xmodule.ProvideName(sn.SScutService, service.NewScutService())     // *service.ScutService
+	xmodule.ProvideByName(sn.SHttpService, service.NewHttpService())     // *service.HttpService
+	xmodule.ProvideByName(sn.SGithubService, service.NewGithubService()) // *service.GithubService
+	xmodule.ProvideByName(sn.SScutService, service.NewScutService())     // *service.ScutService
 
 	return nil
 }

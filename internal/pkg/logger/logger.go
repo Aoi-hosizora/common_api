@@ -21,13 +21,13 @@ func Setup() (*logrus.Logger, error) {
 	logger.SetReportCaller(false)
 	logger.SetFormatter(xlogrus.NewSimpleFormatter(
 		xlogrus.WithTimestampFormat(time.RFC3339),
-		xlogrus.WithUseUTCTime(false),
+		xlogrus.WithTimeLocation(time.Local),
 	))
 
-	cfg := xmodule.MustGetByName(sn.SConfig).(*config.Config).Meta
+	logName := xmodule.MustGetByName(sn.SConfig).(*config.Config).Meta.LogName
 	rotation, err := xrotation.New(
-		xrotation.WithFilenamePattern(cfg.LogName+".%Y%m%d.log"),
-		xrotation.WithSymlinkFilename(cfg.LogName+"current.log"),
+		logName+".%Y%m%d.log",
+		xrotation.WithSymlinkFilename(logName+".current.log"),
 		xrotation.WithRotationTime(24*time.Hour),
 		xrotation.WithRotationMaxAge(15*24*time.Hour),
 		xrotation.WithClock(xtime.Local),
@@ -35,7 +35,8 @@ func Setup() (*logrus.Logger, error) {
 	if err != nil {
 		return nil, err
 	}
-	logger.AddHook(xlogrus.NewRotationHook(rotation,
+	logger.AddHook(xlogrus.NewRotationHook(
+		rotation,
 		xlogrus.WithRotateLevel(level),
 		xlogrus.WithRotateFormatter(xlogrus.RFC3339JsonFormatter()),
 	))
