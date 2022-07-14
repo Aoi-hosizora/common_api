@@ -21,12 +21,12 @@ func Setup() (*logrus.Logger, error) {
 	logger.SetReportCaller(false)
 	logger.SetFormatter(xlogrus.NewSimpleFormatter(
 		xlogrus.WithTimestampFormat(time.RFC3339),
-		xlogrus.WithUseUTCTime(false),
+		xlogrus.WithTimeLocation(time.Local),
 	))
 
 	cfg := xmodule.MustGetByName(sn.SConfig).(*config.Config).Meta
 	rotation, err := xrotation.New(
-		xrotation.WithFilenamePattern(cfg.LogName+".%Y%m%d.log"),
+		cfg.LogName+".%Y%m%d.log",
 		xrotation.WithSymlinkFilename(cfg.LogName+"current.log"),
 		xrotation.WithRotationTime(24*time.Hour),
 		xrotation.WithRotationMaxAge(15*24*time.Hour),

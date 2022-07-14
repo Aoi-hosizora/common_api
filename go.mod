@@ -9,7 +9,7 @@ require (
 	github.com/Aoi-hosizora/goapidoc v1.3.0
 	github.com/PuerkitoBio/goquery v1.5.1
 	github.com/gin-contrib/cors v1.3.1
-	github.com/gin-gonic/gin v1.7.3
+	github.com/gin-gonic/gin v1.7.7
 	github.com/google/uuid v1.1.2
 	github.com/juju/ratelimit v1.0.1
 	github.com/sirupsen/logrus v1.8.1

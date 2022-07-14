@@ -53,7 +53,9 @@ func NewServer() (*Server, error) {
 	}
 
 	// server
-	engine := xgin.NewEngineWithoutDebugWarning()
+	restore := xgin.HideDebugLogging()
+	engine := gin.New()
+	restore()
 
 	// mw
 	engine.Use(middleware.RequestIDMiddleware())
@@ -101,7 +103,7 @@ func (s *Server) Serve() {
 		}
 	}()
 
-	hp, hsp, _ := xgin.GetProxyEnv()
+	hp, hsp, _ := xruntime.GetProxyEnv()
 	if hp != "" {
 		log.Printf("[Gin] Using http proxy: %s", hp)
 	}

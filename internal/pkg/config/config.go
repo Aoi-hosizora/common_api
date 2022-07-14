@@ -50,14 +50,14 @@ func Load(path string) (*Config, error) {
 }
 
 func validateConfig(cfg *Config) error {
-	val := xvalidator.NewCustomStructValidator()
-	val.SetValidatorTagName("validate")
+	val := xvalidator.NewMessagedValidator()
+	val.SetValidateTagName("validate")
 	val.SetMessageTagName("message")
 	xvalidator.UseTagAsFieldName(val.ValidateEngine(), "yaml")
 	err := val.ValidateStruct(cfg)
 	if err != nil {
 		ut, _ := xvalidator.ApplyTranslator(val.ValidateEngine(), xvalidator.EnLocaleTranslator(), xvalidator.EnTranslationRegisterFunc())
-		return xvalidator.FlattedMapToError(err.(*xvalidator.ValidateFieldsError).Translate(ut, false))
+		return xvalidator.MapToError(err.(*xvalidator.MultiFieldsError).Translate(ut, false))
 	}
 	return nil
 }

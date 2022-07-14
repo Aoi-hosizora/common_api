@@ -77,8 +77,7 @@ type scutTagWithDoc struct {
 
 func (s *ScutService) GetSeNotices() ([]*biz.ScutNoticeItem, error) {
 	pairs := make([]scutTagWithDoc, len(static.ScutSeTagParts))
-	eg := xerror.WithCancel(context.Background())
-	eg.SetGoExecutor(xerror.DefaultExecutor)
+	eg := xerror.NewErrorGroup(context.Background())
 	for idx, part := range static.ScutSeTagParts {
 		pairs[idx].tag = static.ScutSeTagNames[idx]
 		idx, part := idx, part
@@ -116,8 +115,7 @@ func (s *ScutService) GetSeNotices() ([]*biz.ScutNoticeItem, error) {
 func (s *ScutService) GetGrNotices() ([]*biz.ScutNoticeItem, error) {
 	const pages = 2
 	docs := make([]*goquery.Document, pages)
-	eg := xerror.WithCancel(context.Background())
-	eg.SetGoExecutor(xerror.DefaultExecutor)
+	eg := xerror.NewErrorGroup(context.Background())
 	for i := 0; i < pages; i++ {
 		i := i
 		eg.Go(func(ctx context.Context) error {
@@ -155,8 +153,7 @@ func (s *ScutService) GetGrNotices() ([]*biz.ScutNoticeItem, error) {
 
 func (s *ScutService) GetGzicNotices() ([]*biz.ScutNoticeItem, error) {
 	pairs := make([]scutTagWithDoc, len(static.ScutGzicTagParts))
-	eg := xerror.WithCancel(context.Background())
-	eg.SetGoExecutor(xerror.DefaultExecutor)
+	eg := xerror.NewErrorGroup(context.Background())
 	for idx, part := range static.ScutGzicTagParts {
 		pairs[idx].tag = static.ScutGzicTagNames[idx]
 		idx, part := idx, part

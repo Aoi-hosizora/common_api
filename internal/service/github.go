@@ -2,12 +2,16 @@ package service
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/Aoi-hosizora/ahlib/xmodule"
+	"github.com/Aoi-hosizora/common_api/internal/model/biz"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/module/sn"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/static"
+	"log"
 	"math"
 	"net/http"
+	"net/url"
 	"sort"
 	"strconv"
 	"strings"
@@ -40,6 +44,38 @@ func (g *GithubService) GetRateLimit(auth string) (map[string]interface{}, error
 		return nil, err
 	}
 	return data, nil
+}
+
+func (g *GithubService) GetRepoIssuesByTitle(owner, repo string, page, limit int32, q string, auth string) (int32, []*biz.GithubIssueItem, error) {
+	qString := fmt.Sprintf("repo:%s/%s is:issue", owner, repo)
+	if q != "" {
+		qString += fmt.Sprintf(" %s in:title", q)
+	}
+	qString = url.PathEscape(qString)
+	u := fmt.Sprintf(static.GithubIssueSimpleSearchApi, qString, page, limit) // q page per_page
+	log.Println(u,auth)
+	bs, resp, err := g.httpService.HttpGet(u, func(r *http.Request) {
+		r.Header.Set("Authorization", auth)
+	})
+	if err != nil {
+		return 0, nil, err
+	}
+	log.Println(string(bs))
+	if resp.StatusCode != 200 {
+		return 0, nil, errors.New("response status is not 200 OK")
+	}
+
+	r := &biz.GithubIssueSearchResult{}
+	err = json.Unmarshal(bs, r)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	total := int32(-1)
+	if !r.IncompleteResults {
+		total = r.TotalCount
+	}
+	return total, r.Items, nil
 }
 
 func (g *GithubService) GetIssueTimelines(name string, page int32, auth string) ([]map[string]interface{}, error) {
