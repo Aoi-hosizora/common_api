@@ -1,12 +1,12 @@
 package exception
 
 var (
-	errno4 = int32(40000) - 1
-	errno5 = int32(50000) - 1
+	errno4xx = int32(40000) - 1
+	errno5xx = int32(50000) - 1
 )
 
-func new4(s int32, m string) *Error { errno4++; return New(s, errno4, m) }
-func new5(s int32, m string) *Error { errno5++; return New(s, errno5, m) }
+func new4(s int32, m string) *Error { errno4xx++; return New(s, errno4xx, m) }
+func new5(s int32, m string) *Error { errno5xx++; return New(s, errno5xx, m) }
 
 // Server related
 var (
@@ -17,8 +17,9 @@ var (
 // GitHub related
 var (
 	GithubQueryRateLimitError     = new5(500, "failed to query github rate limit")     // 50001
-	GithubQueryRepoIssuesError    = new5(500, "failed to query github repo issues")    // 50002
-	GithubQueryIssueTimelineError = new5(500, "failed to query github issue timeline") // 50003
+	GithubQueryApiResponseError   = new5(500, "failed to query github api response")   // 50002
+	GithubQueryRepoIssuesError    = new5(500, "failed to query github repo issues")    // 50003
+	GithubQueryIssueTimelineError = new5(500, "failed to query github issue timeline") // 50004
 )
 
 // SCUT related

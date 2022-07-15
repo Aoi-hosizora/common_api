@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"github.com/Aoi-hosizora/common_api/internal/model/biz"
+	"github.com/Aoi-hosizora/common_api/internal/model/obj"
 	"github.com/Aoi-hosizora/goapidoc"
 )
 
@@ -26,7 +26,7 @@ type ScutNoticeItemDto struct {
 	Date      string `json:"date"`
 }
 
-func BuildScutNoticeItemDto(item *biz.ScutNoticeItem) *ScutNoticeItemDto {
+func BuildScutNoticeItemDto(item *obj.ScutNoticeItem) *ScutNoticeItemDto {
 	return &ScutNoticeItemDto{
 		Title:     item.Title,
 		Url:       item.Url,
@@ -36,7 +36,7 @@ func BuildScutNoticeItemDto(item *biz.ScutNoticeItem) *ScutNoticeItemDto {
 	}
 }
 
-func BuildScutNoticeItemDtos(items []*biz.ScutNoticeItem) []*ScutNoticeItemDto {
+func BuildScutNoticeItemDtos(items []*obj.ScutNoticeItem) []*ScutNoticeItemDto {
 	out := make([]*ScutNoticeItemDto, len(items))
 	for idx, item := range items {
 		out[idx] = BuildScutNoticeItemDto(item)

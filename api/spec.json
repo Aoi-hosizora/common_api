@@ -1,6 +1,6 @@
 {
   "swagger": "2.0",
-  "host": "127.0.0.1:10014",
+  "host": "localhost:10014",
   "basePath": "/",
   "info": {
     "title": "common_api",
@@ -36,7 +36,7 @@
             "name": "Authorization",
             "in": "header",
             "required": true,
-            "description": "github access token",
+            "description": "github access token, format: Token xxx",
             "type": "string"
           }
         ],
@@ -92,7 +92,7 @@
             "name": "Authorization",
             "in": "header",
             "required": true,
-            "description": "github access token",
+            "description": "github access token, format: Token xxx",
             "type": "string"
           }
         ],
@@ -155,7 +155,7 @@
             "name": "Authorization",
             "in": "header",
             "required": true,
-            "description": "github access token",
+            "description": "github access token, format: Token xxx",
             "type": "string"
           }
         ],
@@ -164,6 +164,39 @@
             "description": "200 OK",
             "schema": {
               "$ref": "#/definitions/_Result<GithubIssueItemDto>"
+            }
+          }
+        }
+      }
+    },
+    "/github/token/{token}/api/{url}": {
+      "get": {
+        "summary": "Request api with given token",
+        "operationId": "-github-token-:token-api-:url-get",
+        "tags": [
+          "Github"
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "description": "github access token, format: Token xxx",
+            "type": "string"
+          },
+          {
+            "name": "url",
+            "in": "path",
+            "required": true,
+            "description": "github api url without api.github.com prefix",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK",
+            "schema": {
+              "type": "string"
             }
           }
         }
@@ -197,7 +230,7 @@
             "name": "Authorization",
             "in": "header",
             "required": true,
-            "description": "github access token",
+            "description": "github access token, format: Token xxx",
             "type": "string"
           }
         ],

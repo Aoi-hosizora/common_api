@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/Aoi-hosizora/ahlib-web/xgin"
-	"github.com/Aoi-hosizora/ahlib/xcolor"
 	"github.com/Aoi-hosizora/ahlib/xmodule"
 	"github.com/Aoi-hosizora/ahlib/xruntime"
 	"github.com/Aoi-hosizora/common_api/api"
@@ -13,8 +12,6 @@ import (
 	"github.com/Aoi-hosizora/common_api/internal/server/middleware"
 	"github.com/Aoi-hosizora/goapidoc"
 	"github.com/gin-gonic/gin"
-	ginSwagger "github.com/swaggo/gin-swagger"
-	"github.com/swaggo/gin-swagger/swaggerFiles"
 	"log"
 	"net/http"
 	"os"
@@ -43,38 +40,30 @@ type Server struct {
 }
 
 func NewServer() (*Server, error) {
-	if config.IsDebugMode() {
-		gin.SetMode(gin.DebugMode)
-	} else {
-		gin.SetMode(gin.ReleaseMode)
-	}
-	gin.DebugPrintRouteFunc = func(method, path, handlerName string, numHandlers int) {
-		fmt.Printf("[Gin-debug] %s --> %s (%d handlers)\n", xcolor.Blue.Sprintf("%-6s %-30s", method, path), handlerName, numHandlers)
-	}
-
 	// server
 	restore := xgin.HideDebugLogging()
 	engine := gin.New()
 	restore()
 
-	// mw
+	// middlewares
 	engine.Use(middleware.RequestIDMiddleware())
 	engine.Use(middleware.LoggerMiddleware())
 	engine.Use(middleware.RecoveryMiddleware())
 	engine.Use(middleware.LimiterMiddleware())
 	engine.Use(middleware.CorsMiddleware())
 
-	// route
+	// routes
+	xgin.SetPrintRouteFunc(xgin.DefaultColorizedPrintRouteFunc)
 	if config.IsDebugMode() {
-		restore := xgin.HideDebugPrintRoute()
+		restore = xgin.HideDebugPrintRoute()
 		xgin.WrapPprof(engine)
 		restore()
 	}
 	cfg := xmodule.MustGetByName(sn.SConfig).(*config.Config)
 	if cfg.Meta.Swagger {
 		api.RegisterSwagger()
-		engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.URL("doc.json")))
-		engine.GET("/swagger", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/swagger/index.html") })
+		engine.GET("/swagger/*any", api.SwaggerHandler("doc.json"))
+		engine.GET("/swagger", xgin.RedirectHandler(301, "/v1/swagger/index.html"))
 	}
 	setupRoutes(engine)
 
@@ -93,6 +82,7 @@ func (s *Server) Serve() {
 		ch := make(chan os.Signal)
 		signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
 		sig := <-ch
+		signal.Stop(ch)
 		log.Printf("[Gin] Shutting down due to %s received...", xruntime.SignalName(sig.(syscall.Signal)))
 
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)

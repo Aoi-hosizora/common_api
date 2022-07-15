@@ -1,12 +1,11 @@
 ### Editor ###
 .vscode/
 .ionide/
-.history
+.history/
 .idea/
 
 ### Project ###
 build/
-logs/*.*
 logs/*
 !.gitkeep
 config.yaml

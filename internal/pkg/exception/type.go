@@ -39,9 +39,6 @@ type ErrorDto struct {
 }
 
 func BuildBasicErrorDto(err interface{}, c *gin.Context) *ErrorDto {
-	if err == nil {
-		return nil
-	}
 	now := time.Now().Format(time.RFC3339)
 	typ := fmt.Sprintf("%T", err)
 	detail := fmt.Sprintf("%v", err)
@@ -54,9 +51,6 @@ func BuildBasicErrorDto(err interface{}, c *gin.Context) *ErrorDto {
 }
 
 func BuildFullErrorDto(err interface{}, c *gin.Context, skip uint) (*ErrorDto, xruntime.TraceStack) {
-	if err == nil {
-		return nil, nil
-	}
 	dto := BuildBasicErrorDto(err, c) // include request info
 	var stack xruntime.TraceStack
 	stack, dto.Filename, dto.Funcname, dto.LineIndex, dto.Line = xruntime.RuntimeTraceStackWithInfo(skip + 1)

@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"github.com/Aoi-hosizora/common_api/internal/model/biz"
+	"github.com/Aoi-hosizora/common_api/internal/model/obj"
 	"github.com/Aoi-hosizora/goapidoc"
 	"time"
 )
@@ -31,7 +31,7 @@ type GithubIssueItemDto struct {
 	CreateTime    string   `json:"create_time"`
 }
 
-func BuildGithubIssueItemDto(item *biz.GithubIssueItem) *GithubIssueItemDto {
+func BuildGithubIssueItemDto(item *obj.GithubIssueItem) *GithubIssueItemDto {
 	labels := make([]string, len(item.Labels))
 	for idx, label := range item.Labels {
 		labels[idx] = label.Name
@@ -47,7 +47,7 @@ func BuildGithubIssueItemDto(item *biz.GithubIssueItem) *GithubIssueItemDto {
 	}
 }
 
-func BuildGithubIssueItemDtos(items []*biz.GithubIssueItem) []*GithubIssueItemDto {
+func BuildGithubIssueItemDtos(items []*obj.GithubIssueItem) []*GithubIssueItemDto {
 	out := make([]*GithubIssueItemDto, len(items))
 	for idx, item := range items {
 		out[idx] = BuildGithubIssueItemDto(item)

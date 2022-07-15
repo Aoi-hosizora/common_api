@@ -1,4 +1,4 @@
-package biz
+package obj
 
 import (
 	"sort"
@@ -7,9 +7,9 @@ import (
 type ScutNoticeItem struct {
 	Title     string
 	Url       string
-	MobileUrl string
+	MobileUrl string // may equal to url
 	Type      string
-	Date      string
+	Date      string // split by "-"
 }
 
 func NewScutNoticeItem(title, url, mobileUrl, typ, date string) *ScutNoticeItem {

@@ -25,10 +25,5 @@ type Page struct {
 }
 
 func NewPage(page int32, limit int32, total int32, data interface{}) *Page {
-	return &Page{
-		Page:  page,
-		Limit: limit,
-		Total: total,
-		Data:  data,
-	}
+	return &Page{Page: page, Limit: limit, Total: total, Data: data}
 }
