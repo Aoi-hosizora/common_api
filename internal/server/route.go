@@ -39,8 +39,8 @@ func setupRoutes(engine *gin.Engine) {
 	githubGroup := engine.Group("github")
 	githubGroup.GET("rate_limit", githubController.GetRateLimit)
 	githubGroup.GET("token/:token/api/*url", githubController.RequestApiWithToken)
-	githubGroup.GET("repos/:owner/:repo", githubController.GetRepoIssues)
-	githubGroup.GET("repos/:owner/:repo/search/:q", githubController.QueryRepoIssuesByTitle)
+	githubGroup.GET("repos/:owner/:repo/issues", githubController.GetRepoIssues)
+	githubGroup.GET("repos/:owner/:repo/issues/search/:q", githubController.QueryRepoIssuesByTitle)
 	githubGroup.GET("users/:owner/issues/timeline", githubController.GetIssueTimeline)
 
 	scutGroup := engine.Group("scut")

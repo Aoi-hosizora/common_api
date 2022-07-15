@@ -30,7 +30,7 @@ func init() {
 			AddParams(goapidoc.NewPathParam("url", "string", true, "github api url without api.github.com prefix")).
 			Responses(goapidoc.NewResponse(200, "string")), // ...
 
-		goapidoc.NewGetOperation("/github/repos/{owner}/{repo}", "Get repo simplified issue list").
+		goapidoc.NewGetOperation("/github/repos/{owner}/{repo}/issues", "Get repo simplified issue list").
 			Tags("Github").
 			AddParams(goapidoc.NewPathParam("owner", "string", true, "owner name")).
 			AddParams(goapidoc.NewPathParam("repo", "string", true, "repo name")).
@@ -39,7 +39,7 @@ func init() {
 			AddParams(goapidoc.NewHeaderParam("Authorization", "string", true, "github access token, format: Token xxx")).
 			Responses(goapidoc.NewResponse(200, "_Result<GithubIssueItemDto>")),
 
-		goapidoc.NewGetOperation("/github/repos/{owner}/{repo}/search/{q}", "Query repo simplified issue list by title").
+		goapidoc.NewGetOperation("/github/repos/{owner}/{repo}/issues/search/{q}", "Query repo simplified issue list by title").
 			Tags("Github").
 			AddParams(goapidoc.NewPathParam("owner", "string", true, "owner name")).
 			AddParams(goapidoc.NewPathParam("repo", "string", true, "repo name")).
@@ -135,7 +135,7 @@ func (g *GithubController) RequestApiWithToken(c *gin.Context) {
 	}
 }
 
-// GetRepoIssues GET /github/repos/:owner/:repo
+// GetRepoIssues GET /github/repos/:owner/:repo/issues
 func (g *GithubController) GetRepoIssues(c *gin.Context) {
 	owner := c.Param("owner")
 	repo := c.Param("repo")
@@ -156,7 +156,7 @@ func (g *GithubController) GetRepoIssues(c *gin.Context) {
 	result.Ok().SetPage(page, limit, total, res).JSON(c)
 }
 
-// QueryRepoIssuesByTitle GET /github/repos/:owner/:repo/search/:q
+// QueryRepoIssuesByTitle GET /github/repos/:owner/:repo/issues/search/:q
 func (g *GithubController) QueryRepoIssuesByTitle(c *gin.Context) {
 	owner := c.Param("owner")
 	repo := c.Param("repo")
