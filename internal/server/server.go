@@ -41,9 +41,7 @@ type Server struct {
 
 func NewServer() (*Server, error) {
 	// server
-	restore := xgin.HideDebugLogging()
-	engine := gin.New()
-	restore()
+	engine := xgin.NewWithoutLogging()
 
 	// middlewares
 	engine.Use(middleware.RequestIDMiddleware())
@@ -53,17 +51,15 @@ func NewServer() (*Server, error) {
 	engine.Use(middleware.CorsMiddleware())
 
 	// routes
-	xgin.SetPrintRouteFunc(xgin.DefaultColorizedPrintRouteFunc)
-	if config.IsDebugMode() {
-		restore = xgin.HideDebugPrintRoute()
-		xgin.WrapPprof(engine)
-		restore()
-	}
+	gin.DebugPrintRouteFunc = xgin.DefaultColorizedPrintRouteFunc
 	cfg := xmodule.MustGetByName(sn.SConfig).(*config.Config)
+	if cfg.Meta.Pprof {
+		xgin.WrapPprofWithoutLogging(engine)
+	}
 	if cfg.Meta.Swagger {
 		api.RegisterSwagger()
-		engine.GET("/swagger/*any", api.SwaggerHandler("doc.json"))
-		engine.GET("/swagger", xgin.RedirectHandler(301, "/v1/swagger/index.html"))
+		engine.GET("/v1/swagger/*any", api.SwaggerHandler("doc.json"))
+		engine.GET("/v1/swagger", xgin.RedirectHandler(301, "/v1/swagger/index.html"))
 	}
 	setupRoutes(engine)
 
@@ -73,8 +69,15 @@ func NewServer() (*Server, error) {
 
 func (s *Server) Serve() {
 	cfg := xmodule.MustGetByName(sn.SConfig).(*config.Config)
-	addr := fmt.Sprintf("0.0.0.0:%d", cfg.Meta.Port)
+	addr := fmt.Sprintf("%s:%d", cfg.Meta.Host, cfg.Meta.Port)
 	server := &http.Server{Addr: addr, Handler: s.engine}
+	_, hp, hsp, _ := xruntime.GetProxyEnv()
+	if hp != "" {
+		log.Printf("[Gin] Using http proxy: %s", hp)
+	}
+	if hsp != "" {
+		log.Printf("[Gin] Using https proxy: %s", hsp)
+	}
 
 	terminated := make(chan interface{})
 	go func() {
@@ -93,13 +96,6 @@ func (s *Server) Serve() {
 		}
 	}()
 
-	hp, hsp, _ := xruntime.GetProxyEnv()
-	if hp != "" {
-		log.Printf("[Gin] Using http proxy: %s", hp)
-	}
-	if hsp != "" {
-		log.Printf("[Gin] Using https proxy: %s", hsp)
-	}
 	log.Printf("[Gin] Listening and serving HTTP on %s", addr)
 	err := server.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {

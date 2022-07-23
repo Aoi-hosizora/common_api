@@ -1,7 +1,9 @@
 meta:
   port: 10014
+  host: 0.0.0.0
   run-mode: debug
   log-name: ./logs/console
+  ppof: true
   swagger: true
   doc-host: 127.0.0.1:10014
   bucket-cap: 20

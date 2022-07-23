@@ -9,7 +9,7 @@ import (
 )
 
 func setupRoutes(engine *gin.Engine) {
-	// meta
+	// meta routes
 	engine.HandleMethodNotAllowed = true
 	engine.NoRoute(func(c *gin.Context) {
 		msg := fmt.Sprintf("route '%s' is not found", c.Request.URL.Path)
@@ -32,16 +32,15 @@ func setupRoutes(engine *gin.Engine) {
 		scutController   = controller.NewScutController()
 	)
 
-	// ======
-	// routes
-	// ======
+	// route groups
+	v1 := engine.Group("v1")
 
-	githubGroup := engine.Group("github")
+	githubGroup := v1.Group("github")
 	githubGroup.GET("rate_limit", githubController.GetRateLimit)
 	githubGroup.GET("token/:token/api/*url", githubController.RequestApiWithToken)
 	githubGroup.GET("users/:name/issues/timeline", githubController.GetIssueTimeline)
 
-	scutGroup := engine.Group("scut")
+	scutGroup := v1.Group("scut")
 	scutGroup.GET("notice/jw", scutController.GetJwNotices)
 	scutGroup.GET("notice/se", scutController.GetSeNotices)
 	scutGroup.GET("notice/gr", scutController.GetGrNotices)

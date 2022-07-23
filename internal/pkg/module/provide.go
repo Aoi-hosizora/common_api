@@ -10,9 +10,9 @@ import (
 )
 
 func Provide(configPath string) error {
-	// ======
-	// server
-	// ======
+	// ========
+	// 1. basic
+	// ========
 
 	// *config.Config
 	cfg, err := config.Load(configPath)
@@ -28,9 +28,9 @@ func Provide(configPath string) error {
 	}
 	xmodule.ProvideByName(sn.SLogger, lgr)
 
-	// ========
-	// services
-	// ========
+	// ===========
+	// 2. services
+	// ===========
 
 	xmodule.ProvideByName(sn.SHttpService, service.NewHttpService())     // *service.HttpService
 	xmodule.ProvideByName(sn.SGithubService, service.NewGithubService()) // *service.GithubService

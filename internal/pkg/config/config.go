@@ -13,9 +13,11 @@ type Config struct {
 
 type MetaConfig struct {
 	Port    int32  `yaml:"port"     validate:"required"`
+	Host    string `yaml:"host"     default:"0.0.0.0"`
 	RunMode string `yaml:"run-mode" default:"debug"`
 	LogName string `yaml:"log-name" default:"./logs/console"`
-	Swagger bool   `yaml:"swagger"`
+	Pprof   bool   `yaml:"pprof"    default:"false"`
+	Swagger bool   `yaml:"swagger"  default:"false"`
 	DocHost string `yaml:"doc-host"`
 
 	BucketCap int64 `yaml:"bucket-cap" default:"200" validate:"gt=0"`
