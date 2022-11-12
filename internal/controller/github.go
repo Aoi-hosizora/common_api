@@ -5,6 +5,7 @@ import (
 	"github.com/Aoi-hosizora/ahlib-web/xgin/headers"
 	"github.com/Aoi-hosizora/ahlib/xmodule"
 	"github.com/Aoi-hosizora/ahlib/xnumber"
+	"github.com/Aoi-hosizora/common_api/internal/model/dto"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/exception"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/module/sn"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/result"
@@ -20,21 +21,40 @@ func init() {
 		goapidoc.NewGetOperation("/github/rate_limit", "Get rate limit status for the authenticated user").
 			Desc("See https://api.github.com/en/rest/reference/rate-limit").
 			Tags("Github").
-			AddParams(goapidoc.NewHeaderParam("Authorization", "string", true, "github token, format: Token xxx")).
+			AddParams(goapidoc.NewHeaderParam("Authorization", "string", true, "github access token, format: Token xxx")).
 			Responses(goapidoc.NewResponse(200, "string")), // ...
 
 		goapidoc.NewGetOperation("/github/token/{token}/api/{url}", "Request api with given token").
 			Tags("Github").
-			AddParams(goapidoc.NewPathParam("token", "string", true, "github token, format: Token xxx")).
+			AddParams(goapidoc.NewPathParam("token", "string", true, "github access token, format: Token xxx")).
 			AddParams(goapidoc.NewPathParam("url", "string", true, "github api url without api.github.com prefix")).
 			Responses(goapidoc.NewResponse(200, "string")), // ...
 
-		goapidoc.NewGetOperation("/github/users/{name}/issues/timeline", "Get github user issues timeline (event)").
+		goapidoc.NewGetOperation("/github/repos/{owner}/{repo}/issues", "Get repo simplified issue list").
+			Tags("Github").
+			AddParams(goapidoc.NewPathParam("owner", "string", true, "owner name")).
+			AddParams(goapidoc.NewPathParam("repo", "string", true, "repo name")).
+			AddParams(goapidoc.NewQueryParam("page", "integer", false, "current page")).
+			AddParams(goapidoc.NewQueryParam("limit", "integer", false, "page size")).
+			AddParams(goapidoc.NewHeaderParam("Authorization", "string", true, "github access token, format: Token xxx")).
+			Responses(goapidoc.NewResponse(200, "_Result<GithubIssueItemDto>")),
+
+		goapidoc.NewGetOperation("/github/repos/{owner}/{repo}/issues/search/{q}", "Query repo simplified issue list by title").
+			Tags("Github").
+			AddParams(goapidoc.NewPathParam("owner", "string", true, "owner name")).
+			AddParams(goapidoc.NewPathParam("repo", "string", true, "repo name")).
+			AddParams(goapidoc.NewPathParam("q", "string", true, "issue title")).
+			AddParams(goapidoc.NewQueryParam("page", "integer", false, "current page")).
+			AddParams(goapidoc.NewQueryParam("limit", "integer", false, "page size")).
+			AddParams(goapidoc.NewHeaderParam("Authorization", "string", true, "github access token, format: Token xxx")).
+			Responses(goapidoc.NewResponse(200, "_Result<GithubIssueItemDto>")),
+
+		goapidoc.NewGetOperation("/github/users/{owner}/issues/timeline", "Get user issues timeline (event)").
 			Desc("Fixed field: id?, node_id?, event(enum), actor(User), commit_id?, commit_url?, created_at(time), repo(string), number(integer), involve(string)").
 			Tags("Github").
-			AddParams(goapidoc.NewPathParam("name", "string", true, "github username")).
+			AddParams(goapidoc.NewPathParam("owner", "string", true, "owner name")).
 			AddParams(goapidoc.NewQueryParam("page", "integer#int32", false, "query page")).
-			AddParams(goapidoc.NewHeaderParam("Authorization", "string", true, "github token, format: Token xxx")).
+			AddParams(goapidoc.NewHeaderParam("Authorization", "string", true, "github access token, format: Token xxx")).
 			Responses(goapidoc.NewResponse(200, "string[]")), // ...
 	)
 }
@@ -50,11 +70,27 @@ func NewGithubController() *GithubController {
 }
 
 func (g *GithubController) token(c *gin.Context) string {
-	auth := strings.TrimSpace(c.GetHeader("Authorization"))
-	if auth == "" {
-		auth = strings.TrimSpace(c.DefaultQuery("token", ""))
+	token := strings.TrimSpace(c.GetHeader("Authorization"))
+	if token == "" {
+		token = strings.TrimSpace(c.DefaultQuery("token", ""))
 	}
-	return auth
+	return strings.TrimSpace(token)
+}
+
+func (g *GithubController) bindPage(c *gin.Context, defLimit, maxLimit int32) (page int32, limit int32) {
+	page, err := xnumber.Atoi32(c.Query("page"))
+	if err != nil || page <= 0 {
+		page = 1
+	}
+
+	limit, err = xnumber.Atoi32(c.Query("limit"))
+	if err != nil || limit <= 0 {
+		limit = defLimit
+	} else if limit > maxLimit {
+		limit = maxLimit
+	}
+
+	return page, limit
 }
 
 // GetRateLimit GET /github/rate_limit
@@ -99,13 +135,53 @@ func (g *GithubController) RequestApiWithToken(c *gin.Context) {
 	}
 }
 
-// GetIssueTimeline GET /github/users/:name/issues/timeline?page
-func (g *GithubController) GetIssueTimeline(c *gin.Context) {
-	name := c.Param("name")
-	page, err := xnumber.Atoi32(c.Query("page"))
-	if err != nil || page <= 0 {
-		page = 1
+// GetRepoIssues GET /github/repos/:owner/:repo/issues
+func (g *GithubController) GetRepoIssues(c *gin.Context) {
+	owner := c.Param("owner")
+	repo := c.Param("repo")
+	page, limit := g.bindPage(c, 20, 50)
+	auth := g.token(c)
+	if auth == "" {
+		result.Error(exception.RequestParamError).JSON(c)
+		return
 	}
+
+	total, items, err := g.githubService.GetRepoIssuesByTitle(owner, repo, page, limit, "", auth)
+	if err != nil {
+		result.Error(exception.GithubQueryRepoIssuesError).SetError(err, c).JSON(c)
+		return
+	}
+
+	res := dto.BuildGithubIssueItemDtos(items)
+	result.Ok().SetPage(page, limit, total, res).JSON(c)
+}
+
+// QueryRepoIssuesByTitle GET /github/repos/:owner/:repo/issues/search/:q
+func (g *GithubController) QueryRepoIssuesByTitle(c *gin.Context) {
+	owner := c.Param("owner")
+	repo := c.Param("repo")
+	q := c.Param("q")
+	page, limit := g.bindPage(c, 20, 50)
+	auth := g.token(c)
+	if auth == "" {
+		result.Error(exception.RequestParamError).JSON(c)
+		return
+	}
+
+	total, items, err := g.githubService.GetRepoIssuesByTitle(owner, repo, page, limit, q, auth)
+	if err != nil {
+		result.Error(exception.GithubQueryRepoIssuesError).SetError(err, c).JSON(c)
+		return
+	}
+
+	res := dto.BuildGithubIssueItemDtos(items)
+	result.Ok().SetPage(page, limit, total, res).JSON(c)
+}
+
+// GetIssueTimeline GET /github/users/:owner/issues/timeline?page
+func (g *GithubController) GetIssueTimeline(c *gin.Context) {
+	name := c.Param("owner")
+	page, _ := g.bindPage(c, 0, 0)
 	auth := g.token(c)
 	if auth == "" {
 		result.Error(exception.RequestParamError).JSON(c)

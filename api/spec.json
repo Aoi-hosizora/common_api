@@ -1,6 +1,6 @@
 {
   "swagger": "2.0",
-  "host": "127.0.0.1:10014",
+  "host": "localhost:10014",
   "basePath": "/",
   "info": {
     "title": "common_api",
@@ -36,7 +36,7 @@
             "name": "Authorization",
             "in": "header",
             "required": true,
-            "description": "github token, format: Token xxx",
+            "description": "github access token, format: Token xxx",
             "type": "string"
           }
         ],
@@ -45,6 +45,125 @@
             "description": "200 OK",
             "schema": {
               "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/github/repos/{owner}/{repo}": {
+      "get": {
+        "summary": "Get repo simplified issue list",
+        "operationId": "-github-repos-:owner-:repo-get",
+        "tags": [
+          "Github"
+        ],
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "description": "owner name",
+            "type": "string"
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "description": "repo name",
+            "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "current page",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "page size",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "description": "github access token, format: Token xxx",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK",
+            "schema": {
+              "$ref": "#/definitions/_Result<GithubIssueItemDto>"
+            }
+          }
+        }
+      }
+    },
+    "/github/repos/{owner}/{repo}/search/{q}": {
+      "get": {
+        "summary": "Query repo simplified issue list by title",
+        "operationId": "-github-repos-:owner-:repo-search-:q-get",
+        "tags": [
+          "Github"
+        ],
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "description": "owner name",
+            "type": "string"
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "description": "repo name",
+            "type": "string"
+          },
+          {
+            "name": "q",
+            "in": "path",
+            "required": true,
+            "description": "issue title",
+            "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "current page",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "page size",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "description": "github access token, format: Token xxx",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK",
+            "schema": {
+              "$ref": "#/definitions/_Result<GithubIssueItemDto>"
             }
           }
         }
@@ -62,7 +181,7 @@
             "name": "token",
             "in": "path",
             "required": true,
-            "description": "github token, format: Token xxx",
+            "description": "github access token, format: Token xxx",
             "type": "string"
           },
           {
@@ -83,20 +202,20 @@
         }
       }
     },
-    "/github/users/{name}/issues/timeline": {
+    "/github/users/{owner}/issues/timeline": {
       "get": {
-        "summary": "Get github user issues timeline (event)",
-        "operationId": "-github-users-:name-issues-timeline-get",
+        "summary": "Get user issues timeline (event)",
+        "operationId": "-github-users-:owner-issues-timeline-get",
         "description": "Fixed field: id?, node_id?, event(enum), actor(User), commit_id?, commit_url?, created_at(time), repo(string), number(integer), involve(string)",
         "tags": [
           "Github"
         ],
         "parameters": [
           {
-            "name": "name",
+            "name": "owner",
             "in": "path",
             "required": true,
-            "description": "github username",
+            "description": "owner name",
             "type": "string"
           },
           {
@@ -111,7 +230,7 @@
             "name": "Authorization",
             "in": "header",
             "required": true,
-            "description": "github token, format: Token xxx",
+            "description": "github access token, format: Token xxx",
             "type": "string"
           }
         ],
@@ -198,6 +317,54 @@
     }
   },
   "definitions": {
+    "GithubIssueItemDto": {
+      "type": "object",
+      "required": [
+        "title",
+        "number",
+        "url",
+        "state",
+        "comments_count",
+        "labels",
+        "create_time"
+      ],
+      "description": "github issue item",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "issue title"
+        },
+        "number": {
+          "type": "integer",
+          "format": "int64",
+          "description": "issue number"
+        },
+        "url": {
+          "type": "string",
+          "description": "issue html url"
+        },
+        "state": {
+          "type": "string",
+          "description": "issue state"
+        },
+        "comments_count": {
+          "type": "integer",
+          "format": "int32",
+          "description": "issue comments count"
+        },
+        "labels": {
+          "type": "array",
+          "description": "issue labels",
+          "items": {
+            "type": "string"
+          }
+        },
+        "create_time": {
+          "type": "string",
+          "description": "issue create time"
+        }
+      }
+    },
     "Result": {
       "type": "object",
       "required": [
@@ -282,6 +449,29 @@
           "items": {
             "$ref": "#/definitions/ScutNoticeItemDto"
           }
+        }
+      }
+    },
+    "_Result<GithubIssueItemDto>": {
+      "type": "object",
+      "required": [
+        "code",
+        "message",
+        "data"
+      ],
+      "description": "global response",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32",
+          "description": "status code"
+        },
+        "message": {
+          "type": "string",
+          "description": "status message"
+        },
+        "data": {
+          "$ref": "#/definitions/GithubIssueItemDto"
         }
       }
     },
