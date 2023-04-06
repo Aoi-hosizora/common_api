@@ -2,23 +2,22 @@ package main
 
 import (
 	"fmt"
-	"github.com/Aoi-hosizora/common_api/api"
+	"github.com/Aoi-hosizora/ahlib-more/xpflag"
+	"github.com/Aoi-hosizora/common_api/internal/pkg/apidoc"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/module"
 	"github.com/Aoi-hosizora/common_api/internal/server"
-	"github.com/Aoi-hosizora/goapidoc"
-	"github.com/spf13/pflag"
 	"log"
 )
 
 var (
-	fConfig = pflag.StringP("config", "c", "./config.yaml", "config file path")
-	fHelp   = pflag.BoolP("help", "h", false, "show help")
+	fConfig = xpflag.Cmd().StringP("config", "c", "./config.yaml", "config file path")
+	fHelp   = xpflag.Cmd().BoolP("help", "h", false, "show help")
 )
 
 func main() {
-	pflag.Parse()
-	if *fHelp {
-		pflag.Usage()
+	// flag
+	if xpflag.MustParse(); *fHelp {
+		xpflag.PrintUsage()
 		return
 	}
 
@@ -29,10 +28,9 @@ func main() {
 	}
 
 	// document
-	api.UpdateApiDoc()
-	_, err = goapidoc.SaveSwaggerJson(api.SwaggerDocFilename)
+	err = apidoc.UpdateAndSave()
 	if err != nil {
-		log.Fatalln("Failed to generate swagger:", err)
+		log.Fatalln("Failed to save api document:", err)
 	}
 
 	// server

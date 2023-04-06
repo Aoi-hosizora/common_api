@@ -3,7 +3,7 @@ package controller
 import (
 	"github.com/Aoi-hosizora/ahlib/xmodule"
 	"github.com/Aoi-hosizora/common_api/internal/model/dto"
-	"github.com/Aoi-hosizora/common_api/internal/pkg/exception"
+	"github.com/Aoi-hosizora/common_api/internal/pkg/errno"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/module/sn"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/result"
 	"github.com/Aoi-hosizora/common_api/internal/service"
@@ -42,53 +42,49 @@ func NewScutController() *ScutController {
 }
 
 // GetJwNotices GET /scut/notice/jw
-func (s *ScutController) GetJwNotices(c *gin.Context) {
+func (s *ScutController) GetJwNotices(c *gin.Context) *result.Result {
 	items, err := s.scutService.GetJwNotices()
 	if err != nil {
-		result.Error(exception.ScutQueryJwNoticesError).SetError(err, c).JSON(c)
-		return
+		return result.Error(errno.ScutQueryJwNoticesError).SetError(err, c)
 	}
 
-	l := int32(len(items))
+	l := uint32(len(items))
 	res := dto.BuildScutNoticeItemDtos(items)
-	result.Ok().SetPage(1, l, l, res).JSON(c)
+	return result.Ok().SetPage(1, l, l, res)
 }
 
 // GetSeNotices GET /scut/notice/se
-func (s *ScutController) GetSeNotices(c *gin.Context) {
+func (s *ScutController) GetSeNotices(c *gin.Context) *result.Result {
 	items, err := s.scutService.GetSeNotices()
 	if err != nil {
-		result.Error(exception.ScutQuerySeNoticesError).SetError(err, c).JSON(c)
-		return
+		return result.Error(errno.ScutQuerySeNoticesError).SetError(err, c)
 	}
 
-	l := int32(len(items))
+	l := uint32(len(items))
 	res := dto.BuildScutNoticeItemDtos(items)
-	result.Ok().SetPage(1, l, l, res).JSON(c)
+	return result.Ok().SetPage(1, l, l, res)
 }
 
 // GetGrNotices GET /scut/notice/gr
-func (s *ScutController) GetGrNotices(c *gin.Context) {
+func (s *ScutController) GetGrNotices(c *gin.Context) *result.Result {
 	items, err := s.scutService.GetGrNotices()
 	if err != nil {
-		result.Error(exception.ScutQueryGrNoticesError).SetError(err, c).JSON(c)
-		return
+		return result.Error(errno.ScutQueryGrNoticesError).SetError(err, c)
 	}
 
-	l := int32(len(items))
+	l := uint32(len(items))
 	res := dto.BuildScutNoticeItemDtos(items)
-	result.Ok().SetPage(1, l, l, res).JSON(c)
+	return result.Ok().SetPage(1, l, l, res)
 }
 
 // GetGzicNotices GET /scut/notice/gzic
-func (s *ScutController) GetGzicNotices(c *gin.Context) {
+func (s *ScutController) GetGzicNotices(c *gin.Context) *result.Result {
 	items, err := s.scutService.GetGzicNotices()
 	if err != nil {
-		result.Error(exception.ScutQueryGzicNoticesError).SetError(err, c).JSON(c)
-		return
+		return result.Error(errno.ScutQueryGzicNoticesError).SetError(err, c)
 	}
 
-	l := int32(len(items))
+	l := uint32(len(items))
 	res := dto.BuildScutNoticeItemDtos(items)
-	result.Ok().SetPage(1, l, l, res).JSON(c)
+	return result.Ok().SetPage(1, l, l, res)
 }

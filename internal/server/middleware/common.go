@@ -2,13 +2,14 @@ package middleware
 
 import (
 	"fmt"
-	"github.com/Aoi-hosizora/ahlib-web/xgin"
-	"github.com/Aoi-hosizora/ahlib-web/xgin/headers"
+	"github.com/Aoi-hosizora/ahlib-mx/xgin"
 	"github.com/Aoi-hosizora/ahlib/xcolor"
+	"github.com/Aoi-hosizora/ahlib/xconstant/headers"
 	"github.com/Aoi-hosizora/ahlib/xmodule"
 	"github.com/Aoi-hosizora/ahlib/xnumber"
+	"github.com/Aoi-hosizora/ahlib/xreflect"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/config"
-	"github.com/Aoi-hosizora/common_api/internal/pkg/exception"
+	"github.com/Aoi-hosizora/common_api/internal/pkg/errno"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/module/sn"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/result"
 	"github.com/gin-contrib/cors"
@@ -17,6 +18,7 @@ import (
 	"github.com/juju/ratelimit"
 	"github.com/sirupsen/logrus"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -37,7 +39,7 @@ func getRequestID(c *gin.Context) string {
 
 func RequestIDMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		rid := getRequestID(c)
+		rid := strings.TrimSpace(getRequestID(c))
 		if rid == "" {
 			rid = uuid.New().String()
 			c.Header(headers.XRequestID, rid)
@@ -64,13 +66,14 @@ func RecoveryMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
 			if err := recover(); err != nil {
-				errDto, stack := exception.BuildFullErrorDto(err, c, skip) // include request info and trace stack
+				errDto, stack := errno.BuildFullErrorDto(err, c, skip) // include request info and trace info
 				xcolor.BrightRed.Printf("\n%s\n\n", stack.String())
 
 				rid := getRequestID(c)
 				options := []xgin.LoggerOption{xgin.WithExtraText(fmt.Sprintf(" | %s", rid)), xgin.WithExtraFieldsV("request_id", rid)}
-				xgin.LogRecoveryToLogger(logger, err, stack, options...)
-				r := result.Error(exception.ServerUnknownError)
+				xgin.LogRecoveryToLogrus(logger, err, stack, options...)
+
+				r := result.Error(errno.ServerUnknownError)
 				r.Error = errDto
 				r.JSON(c)
 			}
@@ -80,16 +83,21 @@ func RecoveryMiddleware() gin.HandlerFunc {
 }
 
 func LimiterMiddleware() gin.HandlerFunc {
-	cfg := xmodule.MustGetByName(sn.SConfig).(*config.Config).Meta
-	limiter := ratelimit.NewBucketWithQuantum(time.Second, cfg.BucketCap, cfg.BucketQua)
+	cfg := xmodule.MustGetByName(sn.SConfig).(*config.Config).Server
+	fillInterval := time.Second * time.Duration(cfg.BucketPeriod)
+	limiter := ratelimit.NewBucketWithQuantum(fillInterval, int64(cfg.BucketCap), int64(cfg.BucketQua))
+	startTime := xreflect.GetUnexportedField(xreflect.FieldValueOf(limiter, "startTime")).Interface().(time.Time)
 	return func(c *gin.Context) {
 		available := xnumber.I64toa(limiter.Available())
 		capacity := xnumber.I64toa(limiter.Capacity())
+		reset := (fillInterval - (time.Now().Sub(startTime) % fillInterval)).String()
 		c.Header(headers.XRateLimitRemaining, available)
 		c.Header(headers.XRateLimitLimit, capacity)
+		c.Header(headers.XRateLimitReset, reset)
+		c.Header("X-RateLimit-Policy", fmt.Sprintf("%d;q=%d;w=%d", cfg.BucketCap, cfg.BucketQua, cfg.BucketPeriod))
 
 		if limiter.TakeAvailable(1) == 0 {
-			r := gin.H{"remaining": available, "limit": capacity}
+			r := gin.H{"remaining": available, "limit": capacity /* always 0 here */, "reset": reset}
 			result.Status(http.StatusTooManyRequests).SetData(r).JSON(c)
 			c.Abort()
 		}

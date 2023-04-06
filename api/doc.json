@@ -1,10 +1,10 @@
 {
   "swagger": "2.0",
-  "host": "localhost:10014",
+  "host": "127.0.0.1:10014",
   "basePath": "/",
   "info": {
     "title": "common_api",
-    "version": "1.0.0",
+    "version": "v1.0.0",
     "description": "AoiHosizora's common api collection.",
     "contact": {
       "name": "Aoi-hosizora",
@@ -50,10 +50,10 @@
         }
       }
     },
-    "/github/repos/{owner}/{repo}": {
+    "/github/repos/{owner}/{repo}/issues": {
       "get": {
         "summary": "Get repo simplified issue list",
-        "operationId": "-github-repos-:owner-:repo-get",
+        "operationId": "-github-repos-:owner-:repo-issues-get",
         "tags": [
           "Github"
         ],
@@ -106,10 +106,10 @@
         }
       }
     },
-    "/github/repos/{owner}/{repo}/search/{q}": {
+    "/github/repos/{owner}/{repo}/issues/search/{q}": {
       "get": {
         "summary": "Query repo simplified issue list by title",
-        "operationId": "-github-repos-:owner-:repo-search-:q-get",
+        "operationId": "-github-repos-:owner-:repo-issues-search-:q-get",
         "tags": [
           "Github"
         ],

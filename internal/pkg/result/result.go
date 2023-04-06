@@ -1,8 +1,9 @@
 package result
 
 import (
+	"github.com/Aoi-hosizora/ahlib-mx/xgin"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/config"
-	"github.com/Aoi-hosizora/common_api/internal/pkg/exception"
+	"github.com/Aoi-hosizora/common_api/internal/pkg/errno"
 	"github.com/Aoi-hosizora/goapidoc"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -30,10 +31,10 @@ func init() {
 type Result struct {
 	status int32
 
-	Code    int32               `json:"code"`
-	Message string              `json:"message"`
-	Data    interface{}         `json:"data,omitempty"`
-	Error   *exception.ErrorDto `json:"error,omitempty"`
+	Code    int32           `json:"code"`
+	Message string          `json:"message"`
+	Data    any             `json:"data,omitempty"`
+	Error   *errno.ErrorDto `json:"error,omitempty"`
 }
 
 func Status(status int32) *Result {
@@ -51,8 +52,16 @@ func Ok() *Result {
 	return Status(http.StatusOK)
 }
 
-func Error(e *exception.Error) *Result {
+func Error(e *errno.Error) *Result {
 	return Status(e.Status).SetCode(e.Code).SetMessage(e.Message)
+}
+
+func BindingError(err error, ctx *gin.Context) *Result {
+	translated, need4xx := xgin.TranslateBindingError(err, xgin.WithUtTranslator(xgin.GetGlobalTranslator()))
+	if need4xx {
+		return Error(errno.RequestParamError).SetData(translated).SetError(err, nil) // no request info
+	}
+	return Error(errno.ServerUnknownError).SetError(err, ctx) // include request info
 }
 
 func (r *Result) SetStatus(status int32) *Result {
@@ -70,26 +79,26 @@ func (r *Result) SetMessage(message string) *Result {
 	return r
 }
 
-func (r *Result) SetData(data interface{}) *Result {
+func (r *Result) SetData(data any) *Result {
 	r.Data = data
 	return r
 }
 
-func (r *Result) SetPage(page int32, limit int32, total int32, data interface{}) *Result {
+func (r *Result) SetPage(page, limit, total uint32, data any) *Result {
 	r.Data = NewPage(page, limit, total, data)
 	return r
 }
 
 func (r *Result) SetError(err error, ctx *gin.Context) *Result {
 	if err != nil {
-		r.Error = exception.BuildBasicErrorDto(err, ctx) // include request info
+		r.Error = errno.BuildBasicErrorDto(err, ctx) // include request info, exclude trace info
 	}
 	return r
 }
 
 func (r *Result) prehandle() {
 	if !config.IsDebugMode() && r.Error != nil {
-		r.Error = &exception.ErrorDto{Time: r.Error.Time, RequestID: r.Error.RequestID, Request: r.Error.Request}
+		r.Error = r.Error.RequestOnly()
 	}
 }
 

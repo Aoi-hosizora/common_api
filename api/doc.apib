@@ -1,0 +1,301 @@
+FORMAT: 1A
+HOST: 127.0.0.1:10014/
+
+# common_api (v1.0.0)
+
+AoiHosizora's common api collection.
+
+[Aoi-hosizora - Website](https://github.com/Aoi-hosizora)
+
+[Send email to Aoi-hosizora](mailto:aoihosizora@hotmail.com)
+
+# Group Github
+
+github-controller
+
+## Get rate limit status for the authenticated user [/github/rate_limit]
+
+> `/github/rate_limit`
+
+### Get rate limit status for the authenticated user [GET]
+
+> `GET /github/rate_limit`
+
+See https://api.github.com/en/rest/reference/rate-limit
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: (string, required) - github access token, format: Token xxx
+
+    + Body
+
++ Response 200 (application/json)
+
+    200 OK
+
+    + Attributes (string)
+
+    + Body
+
+## Request api with given token [/github/token/{token}/api/{url}]
+
+> `/github/token/{token}/api/{url}`
+
+### Request api with given token [GET]
+
+> `GET /github/token/{token}/api/{url}`
+
++ Parameters
+
+    + token (string, required) - github access token, format: Token xxx
+    + url (string, required) - github api url without api.github.com prefix
+
++ Request (application/json)
+
+    + Body
+
++ Response 200 (application/json)
+
+    200 OK
+
+    + Attributes (string)
+
+    + Body
+
+## Get repo simplified issue list [/github/repos/{owner}/{repo}/issues{?page,limit}]
+
+> `/github/repos/{owner}/{repo}/issues`
+
+### Get repo simplified issue list [GET]
+
+> `GET /github/repos/{owner}/{repo}/issues`
+
++ Parameters
+
+    + owner (string, required) - owner name
+    + repo (string, required) - repo name
+    + page (number, optional) - current page
+        (format: int32)
+    + limit (number, optional) - page size
+        (format: int32)
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: (string, required) - github access token, format: Token xxx
+
+    + Body
+
++ Response 200 (application/json)
+
+    200 OK
+
+    + Attributes (_Result<GithubIssueItemDto>)
+
+    + Body
+
+## Query repo simplified issue list by title [/github/repos/{owner}/{repo}/issues/search/{q}{?page,limit}]
+
+> `/github/repos/{owner}/{repo}/issues/search/{q}`
+
+### Query repo simplified issue list by title [GET]
+
+> `GET /github/repos/{owner}/{repo}/issues/search/{q}`
+
++ Parameters
+
+    + owner (string, required) - owner name
+    + repo (string, required) - repo name
+    + q (string, required) - issue title
+    + page (number, optional) - current page
+        (format: int32)
+    + limit (number, optional) - page size
+        (format: int32)
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: (string, required) - github access token, format: Token xxx
+
+    + Body
+
++ Response 200 (application/json)
+
+    200 OK
+
+    + Attributes (_Result<GithubIssueItemDto>)
+
+    + Body
+
+## Get user issues timeline (event) [/github/users/{owner}/issues/timeline{?page}]
+
+> `/github/users/{owner}/issues/timeline`
+
+### Get user issues timeline (event) [GET]
+
+> `GET /github/users/{owner}/issues/timeline`
+
+Fixed field: id?, node_id?, event(enum), actor(User), commit_id?, commit_url?, created_at(time), repo(string), number(integer), involve(string)
+
++ Parameters
+
+    + owner (string, required) - owner name
+    + page (number, optional) - query page
+        (format: int32)
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: (string, required) - github access token, format: Token xxx
+
+    + Body
+
++ Response 200 (application/json)
+
+    200 OK
+
+    + Attributes (array[string])
+
+    + Body
+
+# Group Scut
+
+scut-controller
+
+## Get scut jw notices [/scut/notice/jw]
+
+> `/scut/notice/jw`
+
+### Get scut jw notices [GET]
+
+> `GET /scut/notice/jw`
+
++ Request (application/json)
+
+    + Body
+
++ Response 200 (application/json)
+
+    200 OK
+
+    + Attributes (_Result<_Page<ScutNoticeItemDto>>)
+
+    + Body
+
+## Get scut se notices [/scut/notice/se]
+
+> `/scut/notice/se`
+
+### Get scut se notices [GET]
+
+> `GET /scut/notice/se`
+
++ Request (application/json)
+
+    + Body
+
++ Response 200 (application/json)
+
+    200 OK
+
+    + Attributes (_Result<_Page<ScutNoticeItemDto>>)
+
+    + Body
+
+## Get scut gr notices [/scut/notice/gr]
+
+> `/scut/notice/gr`
+
+### Get scut gr notices [GET]
+
+> `GET /scut/notice/gr`
+
++ Request (application/json)
+
+    + Body
+
++ Response 200 (application/json)
+
+    200 OK
+
+    + Attributes (_Result<_Page<ScutNoticeItemDto>>)
+
+    + Body
+
+## Get scut gzic notices [/scut/notice/gzic]
+
+> `/scut/notice/gzic`
+
+### Get scut gzic notices [GET]
+
+> `GET /scut/notice/gzic`
+
++ Request (application/json)
+
+    + Body
+
++ Response 200 (application/json)
+
+    200 OK
+
+    + Attributes (_Result<_Page<ScutNoticeItemDto>>)
+
+    + Body
+
+# Data Structures
+
+## GithubIssueItemDto (object)
+
++ title (string, required) - issue title
++ number (number, required) - issue number
+    (format: int64)
++ url (string, required) - issue html url
++ state (string, required) - issue state
++ comments_count (number, required) - issue comments count
+    (format: int32)
++ labels (array[string], required) - issue labels
++ create_time (string, required) - issue create time
+
+## ScutNoticeItemDto (object)
+
++ title (string, required) - notice title
++ url (string, required) - notice url
++ mobile_url (string, required) - notice url in mobile
++ type (string, required) - notice type, is some specific strings
++ date (string, required) - notice date, format: 0000-00-00
+    (format: date)
+
+## Result (object)
+
++ code (number, required) - status code
+    (format: int32)
++ message (string, required) - status message
+
+## _Result<GithubIssueItemDto> (object)
+
++ code (number, required) - status code
+    (format: int32)
++ message (string, required) - status message
++ data (GithubIssueItemDto, required) - response data
+
+## _Page<ScutNoticeItemDto> (object)
+
++ page (number, required) - current page
+    (format: int32)
++ limit (number, required) - page size
+    (format: int32)
++ total (number, required) - data count
+    (format: int32)
++ data (array[ScutNoticeItemDto], required) - page data
+
+## _Result<_Page<ScutNoticeItemDto>> (object)
+
++ code (number, required) - status code
+    (format: int32)
++ message (string, required) - status message
++ data (_Page<ScutNoticeItemDto>, required) - response data

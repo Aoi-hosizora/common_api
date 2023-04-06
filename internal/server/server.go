@@ -3,15 +3,19 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/Aoi-hosizora/ahlib-web/xgin"
+	"github.com/Aoi-hosizora/ahlib-mx/xgin"
+	"github.com/Aoi-hosizora/ahlib/xcolor"
+	"github.com/Aoi-hosizora/ahlib/xgeneric/xsugar"
 	"github.com/Aoi-hosizora/ahlib/xmodule"
 	"github.com/Aoi-hosizora/ahlib/xruntime"
-	"github.com/Aoi-hosizora/common_api/api"
+	"github.com/Aoi-hosizora/common_api/internal/pkg/apidoc"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/config"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/module/sn"
+	"github.com/Aoi-hosizora/common_api/internal/pkg/result"
 	"github.com/Aoi-hosizora/common_api/internal/server/middleware"
 	"github.com/Aoi-hosizora/goapidoc"
 	"github.com/gin-gonic/gin"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -22,8 +26,8 @@ import (
 
 func init() {
 	goapidoc.SetDocument(
-		"localhost:10014", "/",
-		goapidoc.NewInfo("common_api", "AoiHosizora's common api collection.", "1.0.0").
+		"<placeholder>", "/",
+		goapidoc.NewInfo("common_api", "AoiHosizora's common api collection.", "v1.0.0").
 			Contact(goapidoc.NewContact("Aoi-hosizora", "https://github.com/Aoi-hosizora", "aoihosizora@hotmail.com")),
 	)
 
@@ -41,7 +45,15 @@ type Server struct {
 
 func NewServer() (*Server, error) {
 	// server
-	engine := xgin.NewWithoutLogging()
+	engine := xgin.NewEngineSilently(
+		xgin.WithDebugPrintRouteFunc(result.PrintRouteFunc(xgin.DefaultColorizedPrintRouteFunc)),
+		xgin.WithDefaultWriter(xsugar.If(config.IsDebugMode(), nil, io.Discard)),
+		xgin.WithDefaultErrorWriter(xsugar.If(config.IsDebugMode(), nil, io.Discard)),
+		xgin.WithRedirectTrailingSlash(true),
+		xgin.WithRedirectFixedPath(false),
+		xgin.WithRemoveExtraSlash(true),
+		xgin.WithHandleMethodNotAllowed(true),
+	)
 
 	// middlewares
 	engine.Use(middleware.RequestIDMiddleware())
@@ -51,15 +63,12 @@ func NewServer() (*Server, error) {
 	engine.Use(middleware.CorsMiddleware())
 
 	// routes
-	gin.DebugPrintRouteFunc = xgin.DefaultColorizedPrintRouteFunc
-	cfg := xmodule.MustGetByName(sn.SConfig).(*config.Config)
-	if cfg.Meta.Pprof {
-		xgin.WrapPprofWithoutLogging(engine)
+	cfg := xmodule.MustGetByName(sn.SConfig).(*config.Config).Meta
+	if cfg.Pprof {
+		xgin.WrapPprofSilently(engine)
 	}
-	if cfg.Meta.Swagger {
-		api.RegisterSwagger()
-		engine.GET("/v1/swagger/*any", api.SwaggerHandler("doc.json"))
-		engine.GET("/v1/swagger", xgin.RedirectHandler(301, "/v1/swagger/index.html"))
+	if cfg.Swagger {
+		xgin.WrapSwagger(engine.Group("/v1/swagger"), apidoc.ReadSwaggerDoc, apidoc.SwaggerOptions()...)
 	}
 	setupRoutes(engine)
 
@@ -68,18 +77,14 @@ func NewServer() (*Server, error) {
 }
 
 func (s *Server) Serve() {
-	cfg := xmodule.MustGetByName(sn.SConfig).(*config.Config)
-	addr := fmt.Sprintf("%s:%d", cfg.Meta.Host, cfg.Meta.Port)
+	cfg := xmodule.MustGetByName(sn.SConfig).(*config.Config).Meta
+	addr := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
 	server := &http.Server{Addr: addr, Handler: s.engine}
-	_, hp, hsp, _ := xruntime.GetProxyEnv()
-	if hp != "" {
-		log.Printf("[Gin] Using http proxy: %s", hp)
-	}
-	if hsp != "" {
-		log.Printf("[Gin] Using https proxy: %s", hsp)
-	}
 
-	terminated := make(chan interface{})
+	proxyEnv := xruntime.GetProxyEnv()
+	proxyEnv.PrintLog(nil, "[Gin] ")
+
+	terminated := make(chan struct{})
 	go func() {
 		defer close(terminated)
 		ch := make(chan os.Signal)
@@ -96,7 +101,8 @@ func (s *Server) Serve() {
 		}
 	}()
 
-	log.Printf("[Gin] Listening and serving HTTP on %s", addr)
+	log.Println(xcolor.Bold.Sprintf("[Gin] Listening and serving HTTP on %s", addr))
+	fmt.Println()
 	err := server.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
 		log.Fatalln("Failed to serve:", err)

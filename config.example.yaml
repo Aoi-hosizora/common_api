@@ -6,5 +6,12 @@ meta:
   ppof: true
   swagger: true
   doc-host: 127.0.0.1:10014
-  bucket-cap: 20
-  bucket-qua: 10
+
+server:
+  bucket-period: 60 # token bucket fill period interval in seconds
+  bucket-cap: 200   # token bucket capacity
+  bucket-qua: 50    # token bucket quantum in every interval
+
+github:
+  def-limit: 20 # default limit query parameter value
+  max-limit: 50 # maximum limit query parameter value

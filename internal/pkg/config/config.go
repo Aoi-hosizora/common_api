@@ -1,27 +1,39 @@
 package config
 
 import (
-	"github.com/Aoi-hosizora/ahlib-web/xvalidator"
-	"github.com/Aoi-hosizora/ahlib/xreflect"
+	"github.com/Aoi-hosizora/ahlib-mx/xvalidator"
+	"github.com/Aoi-hosizora/ahlib/xdefault"
+	"github.com/Aoi-hosizora/ahlib/xstring"
 	"gopkg.in/yaml.v2"
 	"os"
+	"strings"
 )
 
 type Config struct {
-	Meta *MetaConfig `yaml:"meta"  validate:"required"`
+	Meta   *MetaConfig   `yaml:"meta"   validate:"required"`
+	Server *ServerConfig `yaml:"server" validate:"required"`
+	Github *GithubConfig `yaml:"github" validate:"required"`
 }
 
 type MetaConfig struct {
-	Port    int32  `yaml:"port"     validate:"required"`
-	Host    string `yaml:"host"     default:"0.0.0.0"`
+	Port    uint16 `yaml:"port"     validate:"required"`
+	Host    string `yaml:"host"     default:"0.0.0.0" validate:"ip"`
 	RunMode string `yaml:"run-mode" default:"debug"`
 	LogName string `yaml:"log-name" default:"./logs/console"`
 	Pprof   bool   `yaml:"pprof"    default:"false"`
 	Swagger bool   `yaml:"swagger"  default:"false"`
 	DocHost string `yaml:"doc-host"`
+}
 
-	BucketCap int64 `yaml:"bucket-cap" default:"200" validate:"gt=0"`
-	BucketQua int64 `yaml:"bucket-qua" default:"100" validate:"gt=0"`
+type ServerConfig struct {
+	BucketPeriod uint64 `yaml:"bucket-period" default:"60"  validate:"gt=0"`
+	BucketCap    uint64 `yaml:"bucket-cap"    default:"200" validate:"gt=0"`
+	BucketQua    uint64 `yaml:"bucket-qua"    default:"50"  validate:"gt=0"`
+}
+
+type GithubConfig struct {
+	DefLimit uint32 `yaml:"def-limit" default:"20" validate:"gt=0"`
+	MaxLimit uint32 `yaml:"max-limit" default:"50" validate:"gt=0"`
 }
 
 var _debugMode = true
@@ -37,17 +49,18 @@ func Load(path string) (*Config, error) {
 	}
 
 	cfg := &Config{}
+	f = xstring.FastStob(os.ExpandEnv(xstring.FastBtos(f)))
 	if err = yaml.Unmarshal(f, cfg); err != nil {
 		return nil, err
 	}
-	if _, err = xreflect.FillDefaultFields(cfg); err != nil {
+	if _, err = xdefault.FillDefaultFields(cfg); err != nil {
 		return nil, err
 	}
 	if err = validateConfig(cfg); err != nil {
 		return nil, err
 	}
 
-	_debugMode = cfg.Meta.RunMode == "debug"
+	_debugMode = strings.ToLower(cfg.Meta.RunMode) != "release"
 	return cfg, nil
 }
 
@@ -56,9 +69,12 @@ func validateConfig(cfg *Config) error {
 	val.SetValidateTagName("validate")
 	val.SetMessageTagName("message")
 	val.UseTagAsFieldName("yaml", "json")
-	if err := val.ValidateStruct(cfg); err != nil {
+
+	err := val.ValidateStruct(cfg)
+	if err != nil {
 		ut, _ := xvalidator.ApplyEnglishTranslator(val.ValidateEngine())
-		return xvalidator.MapToError(err.(*xvalidator.MultiFieldsError).Translate(ut, false))
+		translated := err.(*xvalidator.MultiFieldsError).Translate(ut, false)
+		return xvalidator.MergeMapToError(translated)
 	}
 	return nil
 }

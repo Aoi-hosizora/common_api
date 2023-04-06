@@ -1,4 +1,4 @@
-package obj
+package object
 
 import (
 	"time"

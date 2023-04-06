@@ -9,8 +9,10 @@ import (
 )
 
 func setupRoutes(engine *gin.Engine) {
+	// ===========
 	// meta routes
-	engine.HandleMethodNotAllowed = true
+	// ===========
+
 	engine.NoRoute(func(c *gin.Context) {
 		msg := fmt.Sprintf("route '%s' is not found", c.Request.URL.Path)
 		result.Status(404).SetMessage(msg).JSON(c)
@@ -26,14 +28,21 @@ func setupRoutes(engine *gin.Engine) {
 		c.JSON(200, gin.H{"message": "Here is AoiHosizora's common api."})
 	})
 
+	// ===========
 	// controllers
+	// ===========
+
 	var (
 		githubController = controller.NewGithubController()
 		scutController   = controller.NewScutController()
 	)
 
+	// ============
 	// route groups
-	v1 := engine.Group("v1")
+	// ============
+
+	// v1 route group
+	v1 := result.NewRouteRegisterer(engine) // ATTENTION: no "/v1" prefix
 
 	githubGroup := v1.Group("github")
 	githubGroup.GET("rate_limit", githubController.GetRateLimit)

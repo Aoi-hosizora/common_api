@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Aoi-hosizora/ahlib/xmodule"
-	"github.com/Aoi-hosizora/common_api/internal/model/obj"
+	"github.com/Aoi-hosizora/common_api/internal/model/object"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/module/sn"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/static"
 	"net/http"
@@ -23,7 +23,7 @@ func NewGithubService() *GithubService {
 	}
 }
 
-func (g *GithubService) GetRateLimit(token string) (map[string]interface{}, error) {
+func (g *GithubService) GetRateLimit(token string) (map[string]any, error) {
 	bs, _, err := g.httpService.HttpGet(static.GithubRateLimitApi, func(r *http.Request) {
 		r.Header.Add("Authorization", token)
 		r.Header.Add("Accept", static.GithubAccept)
@@ -32,7 +32,7 @@ func (g *GithubService) GetRateLimit(token string) (map[string]interface{}, erro
 		return nil, err
 	}
 
-	data := make(map[string]interface{})
+	data := make(map[string]any)
 	err = json.Unmarshal(bs, &data)
 	if err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func (g *GithubService) RequestApiWithToken(url string, token string) (bs []byte
 	return bs, resp.StatusCode, resp.Header, nil
 }
 
-func (g *GithubService) GetRepoIssuesByTitle(owner, repo string, page, limit int32, q string, token string) (int32, []*obj.GithubIssueItem, error) {
+func (g *GithubService) GetRepoIssuesByTitle(owner, repo string, page, limit uint32, q string, token string) (uint32, []*object.GithubIssueItem, error) {
 	qString := fmt.Sprintf("repo:%s/%s is:issue", owner, repo)
 	if q != "" {
 		qString += fmt.Sprintf(" %s in:title", q)
@@ -69,15 +69,15 @@ func (g *GithubService) GetRepoIssuesByTitle(owner, repo string, page, limit int
 		return 0, nil, errors.New("response status is not 200 OK")
 	}
 
-	r := &obj.GithubIssueSearchResult{}
+	r := &object.GithubIssueSearchResult{}
 	err = json.Unmarshal(bs, r)
 	if err != nil {
 		return 0, nil, err
 	}
 
-	total := int32(-1)
+	total := uint32(len(r.Items))
 	if !r.IncompleteResults {
-		total = r.TotalCount
+		total = uint32(r.TotalCount)
 	}
 	return total, r.Items, nil
 }

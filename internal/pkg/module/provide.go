@@ -1,12 +1,12 @@
 package module
 
 import (
+	"fmt"
 	"github.com/Aoi-hosizora/ahlib/xmodule"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/config"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/logger"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/module/sn"
 	"github.com/Aoi-hosizora/common_api/internal/service"
-	"log"
 )
 
 func Provide(configPath string) error {
@@ -17,14 +17,14 @@ func Provide(configPath string) error {
 	// *config.Config
 	cfg, err := config.Load(configPath)
 	if err != nil {
-		log.Fatalln("Failed to load config:", err)
+		return fmt.Errorf("failed to load config: %w", err)
 	}
 	xmodule.ProvideByName(sn.SConfig, cfg)
 
 	// *logrus.Logger
 	lgr, err := logger.Setup()
 	if err != nil {
-		log.Fatalln("Failed to setup logger:", err)
+		return fmt.Errorf("failed to setup logger: %w", err)
 	}
 	xmodule.ProvideByName(sn.SLogger, lgr)
 

@@ -13,12 +13,12 @@ import (
 	"time"
 )
 
-func (g *GithubService) GetIssueTimelines(name string, page int32, auth string) ([]map[string]interface{}, error) {
+func (g *GithubService) GetIssueTimelines(name string, page uint32, auth string) ([]map[string]any, error) {
 	// get user related issues
 	issueUrls := make([]string, 0)
 	issueCts := make([]string, 0)
-	issueUsers := make([]map[string]interface{}, 0)
-	getIssues := func(page int) (urls []string, cts []string, users []map[string]interface{}, tot int32, err error) {
+	issueUsers := make([]map[string]any, 0)
+	getIssues := func(page int) (urls []string, cts []string, users []map[string]any, tot int32, err error) {
 		url := fmt.Sprintf(static.GithubIssueSearchApi, "updated", "desc", name, page, 100) // sort order involve page per_page
 		bs, _, err := g.httpService.HttpGet(url, func(r *http.Request) {
 			r.Header.Add("Authorization", auth)
@@ -31,9 +31,9 @@ func (g *GithubService) GetIssueTimelines(name string, page int32, auth string) 
 		data := &struct {
 			TotalCount int32 `json:"total_count"`
 			Items      []*struct {
-				HtmlUrl   string                 `json:"html_url"`
-				CreatedAt string                 `json:"created_at"`
-				User      map[string]interface{} `json:"user"`
+				HtmlUrl   string         `json:"html_url"`
+				CreatedAt string         `json:"created_at"`
+				User      map[string]any `json:"user"`
 			} `json:"items"` // 30
 		}{}
 		err = json.Unmarshal(bs, data)
@@ -43,7 +43,7 @@ func (g *GithubService) GetIssueTimelines(name string, page int32, auth string) 
 
 		urls = make([]string, len(data.Items))
 		cts = make([]string, len(data.Items))
-		users = make([]map[string]interface{}, len(data.Items))
+		users = make([]map[string]any, len(data.Items))
 		for idx := range data.Items {
 			urls[idx] = data.Items[idx].HtmlUrl
 			cts[idx] = data.Items[idx].CreatedAt
@@ -61,7 +61,7 @@ func (g *GithubService) GetIssueTimelines(name string, page int32, auth string) 
 	issueCts = append(issueCts, pageCts...)
 	issueUsers = append(issueUsers, pageUsers...)
 
-	perPage := int32(len(issueUrls))
+	perPage := uint32(len(issueUrls))
 	pageCnt := int(math.Ceil(float64(tot) / float64(perPage)))
 	enoughCnt := (page + 1) * static.GithubDefaultIssueLimit
 	if perPage < enoughCnt && pageCnt > 1 { // not enough && has next page
@@ -77,7 +77,7 @@ func (g *GithubService) GetIssueTimelines(name string, page int32, auth string) 
 				mu.Lock()
 				l := len(issueUrls)
 				mu.Unlock()
-				if int32(l) >= enoughCnt { // enough
+				if uint32(l) >= enoughCnt { // enough
 					return
 				}
 				pageUrls, pageCts, pageUsers, _, err := getIssues(i)
@@ -98,7 +98,7 @@ func (g *GithubService) GetIssueTimelines(name string, page int32, auth string) 
 			return nil, errOnce
 		}
 	}
-	if int32(len(issueUrls)) >= enoughCnt { // enough new
+	if uint32(len(issueUrls)) >= enoughCnt { // enough new
 		issueUrls = issueUrls[:enoughCnt]
 	}
 
@@ -108,7 +108,7 @@ func (g *GithubService) GetIssueTimelines(name string, page int32, auth string) 
 		Repo      string
 		Number    int32
 		CreatedAt string
-		User      map[string]interface{}
+		User      map[string]any
 	}
 	issues := make([]*Issue, 0)
 	for idx, url := range issueUrls {
@@ -130,7 +130,7 @@ func (g *GithubService) GetIssueTimelines(name string, page int32, auth string) 
 
 	// get issue events
 	getIssuesCnt := 0
-	getIssueTimeline := func(issue *Issue) ([]map[string]interface{}, error) {
+	getIssueTimeline := func(issue *Issue) ([]map[string]any, error) {
 		url := fmt.Sprintf(static.GithubIssueTimelineApi, issue.Owner, issue.Repo, issue.Number, 100)
 		bs, _, err := g.httpService.HttpGet(url, func(r *http.Request) {
 			r.Header.Add("Authorization", auth)
@@ -141,13 +141,13 @@ func (g *GithubService) GetIssueTimelines(name string, page int32, auth string) 
 		}
 		getIssuesCnt++
 
-		data := make([]map[string]interface{}, 0)
+		data := make([]map[string]any, 0)
 		err = json.Unmarshal(bs, &data)
 		if err != nil {
 			return nil, err
 		}
 
-		out := make([]map[string]interface{}, 0)
+		out := make([]map[string]any, 0)
 		for idx := range data {
 			if data[idx]["event"] == "subscribed" { // filter subscribed, preserve mentioned
 				continue
@@ -160,14 +160,14 @@ func (g *GithubService) GetIssueTimelines(name string, page int32, auth string) 
 		return out, nil
 	}
 
-	events := make([]map[string]interface{}, 0)
+	events := make([]map[string]any, 0)
 	wg := sync.WaitGroup{}
 	mu := sync.Mutex{}
 	once := sync.Once{}
 	errOnce := error(nil)
 	for _, issue := range issues {
 		wg.Add(1)
-		go func(issue *Issue, page int32) {
+		go func(issue *Issue, page uint32) {
 			defer wg.Done()
 
 			data, e := getIssueTimeline(issue)
@@ -177,7 +177,7 @@ func (g *GithubService) GetIssueTimelines(name string, page int32, auth string) 
 			}
 
 			// append issue opened
-			data = append([]map[string]interface{}{{
+			data = append([]map[string]any{{
 				"id":         nil, // <<< ATTENTION NIL
 				"node_id":    nil,
 				"event":      "opened",
@@ -207,7 +207,7 @@ func (g *GithubService) GetIssueTimelines(name string, page int32, auth string) 
 	}
 
 	// filter issue event
-	tempEvents := make([]map[string]interface{}, 0)
+	tempEvents := make([]map[string]any, 0)
 	for idx := range events {
 		if _, ok := events[idx]["created_at"]; ok {
 			tempEvents = append(tempEvents, events[idx])
@@ -237,11 +237,11 @@ func (g *GithubService) GetIssueTimelines(name string, page int32, auth string) 
 		return ti.Unix() > tj.Unix()
 	})
 
-	l := int32(len(events))
+	l := uint32(len(events))
 	from := static.GithubDefaultIssueLimit * (page - 1)
 	to := static.GithubDefaultIssueLimit * page
 	if from >= l {
-		return []map[string]interface{}{}, nil
+		return []map[string]any{}, nil
 	}
 	if to > l {
 		to = l

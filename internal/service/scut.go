@@ -5,10 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/Aoi-hosizora/ahlib-web/xgin/headers"
+	"github.com/Aoi-hosizora/ahlib/xconstant/headers"
 	"github.com/Aoi-hosizora/ahlib/xerror"
 	"github.com/Aoi-hosizora/ahlib/xmodule"
-	"github.com/Aoi-hosizora/common_api/internal/model/obj"
+	"github.com/Aoi-hosizora/common_api/internal/model/object"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/module/sn"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/static"
 	"github.com/PuerkitoBio/goquery"
@@ -27,7 +27,7 @@ func NewScutService() *ScutService {
 	}
 }
 
-func (s *ScutService) GetJwNotices() ([]*obj.ScutNoticeItem, error) {
+func (s *ScutService) GetJwNotices() ([]*object.ScutNoticeItem, error) {
 	form := &url.Values{}
 	form.Add("category", "0")
 	form.Add("tag", "0") // all tags
@@ -59,14 +59,14 @@ func (s *ScutService) GetJwNotices() ([]*obj.ScutNoticeItem, error) {
 		return nil, err
 	}
 
-	out := make([]*obj.ScutNoticeItem, 0, len(items.List))
+	out := make([]*object.ScutNoticeItem, 0, len(items.List))
 	for _, item := range items.List {
 		u := fmt.Sprintf(static.ScutJwNoticeUrl, item.Id)
 		mu := fmt.Sprintf(static.ScutJwNoticeMobileUrl, item.Id)
 		t := strings.ReplaceAll(item.CreateTime, ".", "-") // 2020.01.01 -> 2020-01-01
-		out = append(out, obj.NewScutNoticeItem(item.Title, u, mu, static.ScutJwTagNames[item.Tag], t))
+		out = append(out, object.NewScutNoticeItem(item.Title, u, mu, static.ScutJwTagNames[item.Tag], t))
 	}
-	obj.SortScutNoticeItems(out)
+	object.SortScutNoticeItems(out)
 	return out, nil
 }
 
@@ -75,7 +75,7 @@ type scutTagWithDoc struct {
 	doc *goquery.Document
 }
 
-func (s *ScutService) GetSeNotices() ([]*obj.ScutNoticeItem, error) {
+func (s *ScutService) GetSeNotices() ([]*object.ScutNoticeItem, error) {
 	pairs := make([]scutTagWithDoc, len(static.ScutSeTagParts))
 	eg := xerror.NewErrorGroup(context.Background())
 	for idx, part := range static.ScutSeTagParts {
@@ -99,20 +99,20 @@ func (s *ScutService) GetSeNotices() ([]*obj.ScutNoticeItem, error) {
 		return nil, err
 	}
 
-	out := make([]*obj.ScutNoticeItem, 0)
+	out := make([]*object.ScutNoticeItem, 0)
 	for _, pair := range pairs {
 		pair.doc.Find("ul.news_ul > li.news_li").Each(func(i int, li *goquery.Selection) {
 			a := li.Find("span.news_title a")
 			meta := li.Find("span.news_meta") // 2019-10-01
 			href := fmt.Sprintf(static.ScutSeNoticeWebUrl, a.AttrOr("href", ""))
-			out = append(out, obj.NewScutNoticeItem(a.Text(), href, href, "软院"+pair.tag, meta.Text()))
+			out = append(out, object.NewScutNoticeItem(a.Text(), href, href, "软院"+pair.tag, meta.Text()))
 		})
 	}
-	obj.SortScutNoticeItems(out)
+	object.SortScutNoticeItems(out)
 	return out, nil
 }
 
-func (s *ScutService) GetGrNotices() ([]*obj.ScutNoticeItem, error) {
+func (s *ScutService) GetGrNotices() ([]*object.ScutNoticeItem, error) {
 	const pages = 2
 	docs := make([]*goquery.Document, pages)
 	eg := xerror.NewErrorGroup(context.Background())
@@ -136,7 +136,7 @@ func (s *ScutService) GetGrNotices() ([]*obj.ScutNoticeItem, error) {
 		return nil, err
 	}
 
-	out := make([]*obj.ScutNoticeItem, 0)
+	out := make([]*object.ScutNoticeItem, 0)
 	for _, doc := range docs {
 		doc.Find("table.wp_article_list_table tr").Each(func(i int, tr *goquery.Selection) {
 			a := tr.Find("a")
@@ -144,14 +144,14 @@ func (s *ScutService) GetGrNotices() ([]*obj.ScutNoticeItem, error) {
 			span := a.Find("span")
 			t := span.Text() // 2022-01-19
 			span.Remove()
-			out = append(out, obj.NewScutNoticeItem(a.Text(), href, href, "研究生院"+static.ScutGrTagName, t))
+			out = append(out, object.NewScutNoticeItem(a.Text(), href, href, "研究生院"+static.ScutGrTagName, t))
 		})
 	}
-	obj.SortScutNoticeItems(out)
+	object.SortScutNoticeItems(out)
 	return out, nil
 }
 
-func (s *ScutService) GetGzicNotices() ([]*obj.ScutNoticeItem, error) {
+func (s *ScutService) GetGzicNotices() ([]*object.ScutNoticeItem, error) {
 	pairs := make([]scutTagWithDoc, len(static.ScutGzicTagParts))
 	eg := xerror.NewErrorGroup(context.Background())
 	for idx, part := range static.ScutGzicTagParts {
@@ -175,7 +175,7 @@ func (s *ScutService) GetGzicNotices() ([]*obj.ScutNoticeItem, error) {
 		return nil, err
 	}
 
-	out := make([]*obj.ScutNoticeItem, 0)
+	out := make([]*object.ScutNoticeItem, 0)
 	for _, pair := range pairs {
 		pair.doc.Find("div.right-nr div.row div.thr-box").Each(func(i int, div *goquery.Selection) {
 			a := div.Find("a")
@@ -185,9 +185,9 @@ func (s *ScutService) GetGzicNotices() ([]*obj.ScutNoticeItem, error) {
 			}
 			span := a.Find("span") // 2022-01-17
 			p := a.Find("p")
-			out = append(out, obj.NewScutNoticeItem(p.Text(), href, href, "GZIC"+pair.tag, span.Text()))
+			out = append(out, object.NewScutNoticeItem(p.Text(), href, href, "GZIC"+pair.tag, span.Text()))
 		})
 	}
-	obj.SortScutNoticeItems(out)
+	object.SortScutNoticeItems(out)
 	return out, nil
 }

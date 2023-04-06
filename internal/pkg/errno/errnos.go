@@ -1,4 +1,4 @@
-package exception
+package errno
 
 var (
 	errno4xx = int32(40000) - 1

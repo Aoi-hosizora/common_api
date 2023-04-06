@@ -1,9 +1,9 @@
-package exception
+package errno
 
 import (
 	"fmt"
-	"github.com/Aoi-hosizora/ahlib-web/xgin"
-	"github.com/Aoi-hosizora/ahlib-web/xgin/headers"
+	"github.com/Aoi-hosizora/ahlib-mx/xgin"
+	"github.com/Aoi-hosizora/ahlib/xconstant/headers"
 	"github.com/Aoi-hosizora/ahlib/xruntime"
 	"github.com/gin-gonic/gin"
 	"time"
@@ -38,7 +38,11 @@ type ErrorDto struct {
 	TraceStack []string `json:"trace_stack,omitempty"`
 }
 
-func BuildBasicErrorDto(err interface{}, c *gin.Context) *ErrorDto {
+func (e *ErrorDto) RequestOnly() *ErrorDto {
+	return &ErrorDto{Time: e.Time, RequestID: e.RequestID, Request: e.Request}
+}
+
+func BuildBasicErrorDto(err any, c *gin.Context) *ErrorDto {
 	now := time.Now().Format(time.RFC3339)
 	typ := fmt.Sprintf("%T", err)
 	detail := fmt.Sprintf("%v", err)
@@ -50,10 +54,10 @@ func BuildBasicErrorDto(err interface{}, c *gin.Context) *ErrorDto {
 	return dto
 }
 
-func BuildFullErrorDto(err interface{}, c *gin.Context, skip uint) (*ErrorDto, xruntime.TraceStack) {
-	dto := BuildBasicErrorDto(err, c) // include request info
+func BuildFullErrorDto(err any, c *gin.Context, skip uint32) (*ErrorDto, xruntime.TraceStack) {
+	dto := BuildBasicErrorDto(err, c) // include request info, exclude trace info
 	var stack xruntime.TraceStack
-	stack, dto.Filename, dto.Funcname, dto.LineIndex, dto.Line = xruntime.RuntimeTraceStackWithInfo(skip + 1)
+	stack, dto.Filename, dto.Funcname, dto.LineIndex, dto.Line = xruntime.RuntimeTraceStackWithInfo(uint(skip + 1))
 	dto.TraceStack = make([]string, 0, len(stack))
 	for _, frame := range stack {
 		dto.TraceStack = append(dto.TraceStack, frame.String())
