@@ -27,8 +27,15 @@ func init() {
 
 		goapidoc.NewGetOperation("/github/token/{token}/api/{url}", "Request api with given token").
 			Tags("Github").
+			Deprecated(true).
 			AddParams(goapidoc.NewPathParam("token", "string", true, "github access token")).
 			AddParams(goapidoc.NewPathParam("url", "string", true, "github api url without api.github.com prefix")).
+			Responses(goapidoc.NewResponse(200, "string")), // ...
+
+		goapidoc.NewGetOperation("/github/api/{url}", "Request api with given token").
+			Tags("Github").
+			AddParams(goapidoc.NewPathParam("url", "string", true, "github api url without api.github.com prefix")).
+			AddParams(goapidoc.NewQueryParam("token", "string", true, "github access token")).
 			Responses(goapidoc.NewResponse(200, "string")), // ...
 
 		goapidoc.NewGetOperation("/github/repos/{owner}/{repo}/issues", "Get repo simplified issue list").
@@ -57,6 +64,10 @@ func init() {
 			AddParams(goapidoc.NewQueryParam("page", "integer#int32", false, "query page")).
 			AddParams(goapidoc.NewHeaderParam("Authorization", "string", true, "github access token")).
 			Responses(goapidoc.NewResponse(200, "string[]")), // ...
+
+		goapidoc.NewGetOperation("/github/profile/aoihosizora", "Get Aoi-hosizora user profile with some private fields").
+			Tags("Github").
+			Responses(goapidoc.NewResponse(200, "string")), // ...
 	)
 }
 
@@ -97,9 +108,14 @@ func (g *GithubController) GetRateLimit(c *gin.Context) *result.Result {
 	return nil
 }
 
-// RequestApiWithToken GET /github/token/:token/api/*url
+// RequestApiWithToken GET /github/token/:token/api/*url (deprecated)
+// RequestApiWithToken GET /github/api/*url?token
 func (g *GithubController) RequestApiWithToken(c *gin.Context) *result.Result {
 	token := strings.TrimSpace(c.Param("token"))
+	if token == "" {
+		token = param.BindToken(c)
+	}
+	token = g.checkToken(token)
 	if token == "" {
 		return result.Error(errno.RequestParamError)
 	}
@@ -173,4 +189,18 @@ func (g *GithubController) GetIssueTimeline(c *gin.Context) *result.Result {
 	}
 	c.JSON(http.StatusOK, events)
 	return nil
+}
+
+// GetAoiHosizoraUserProfile GET /github/profile/aoihosizora
+func (g *GithubController) GetAoiHosizoraUserProfile(c *gin.Context) *result.Result {
+	token := g.checkToken(g.config.Github.Token)
+	if token == "" {
+		return result.Error(errno.RequestParamError)
+	}
+
+	data, err := g.githubService.GetAoiHosizoraUserProfile(token)
+	if err != nil {
+		return result.Error(errno.GithubQueryUserProfileError).SetError(err, c)
+	}
+	return result.Ok().SetData(data)
 }

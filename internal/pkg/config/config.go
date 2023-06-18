@@ -34,6 +34,7 @@ type ServerConfig struct {
 type GithubConfig struct {
 	DefLimit uint32 `yaml:"def-limit" default:"20" validate:"gt=0"`
 	MaxLimit uint32 `yaml:"max-limit" default:"50" validate:"gt=0"`
+	Token    string `yaml:"token"`
 }
 
 var _debugMode = true

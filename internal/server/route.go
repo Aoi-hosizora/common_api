@@ -47,9 +47,11 @@ func setupRoutes(engine *gin.Engine) {
 	githubGroup := v1.Group("github")
 	githubGroup.GET("rate_limit", githubController.GetRateLimit)
 	githubGroup.GET("token/:token/api/*url", githubController.RequestApiWithToken)
+	githubGroup.GET("api/*url", githubController.RequestApiWithToken)
 	githubGroup.GET("repos/:owner/:repo/issues", githubController.GetRepoIssues)
 	githubGroup.GET("repos/:owner/:repo/issues/search/:q", githubController.QueryRepoIssuesByTitle)
 	githubGroup.GET("users/:owner/issues/timeline", githubController.GetIssueTimeline)
+	githubGroup.GET("profile/aoihosizora", githubController.GetAoiHosizoraUserProfile)
 
 	scutGroup := v1.Group("scut")
 	scutGroup.GET("notice/jw", scutController.GetJwNotices)

@@ -23,6 +23,56 @@
     }
   ],
   "paths": {
+    "/github/api/{url}": {
+      "get": {
+        "summary": "Request api with given token",
+        "operationId": "-github-api-:url-get",
+        "tags": [
+          "Github"
+        ],
+        "parameters": [
+          {
+            "name": "url",
+            "in": "path",
+            "required": true,
+            "description": "github api url without api.github.com prefix",
+            "type": "string"
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "required": true,
+            "description": "github access token",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/github/profile/aoihosizora": {
+      "get": {
+        "summary": "Get Aoi-hosizora user profile with some private fields",
+        "operationId": "-github-profile-aoihosizora-get",
+        "tags": [
+          "Github"
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
     "/github/rate_limit": {
       "get": {
         "summary": "Get rate limit status for the authenticated user",
@@ -36,7 +86,7 @@
             "name": "Authorization",
             "in": "header",
             "required": true,
-            "description": "github access token, format: Token xxx",
+            "description": "github access token",
             "type": "string"
           }
         ],
@@ -92,7 +142,7 @@
             "name": "Authorization",
             "in": "header",
             "required": true,
-            "description": "github access token, format: Token xxx",
+            "description": "github access token",
             "type": "string"
           }
         ],
@@ -155,7 +205,7 @@
             "name": "Authorization",
             "in": "header",
             "required": true,
-            "description": "github access token, format: Token xxx",
+            "description": "github access token",
             "type": "string"
           }
         ],
@@ -176,12 +226,13 @@
         "tags": [
           "Github"
         ],
+        "deprecated": true,
         "parameters": [
           {
             "name": "token",
             "in": "path",
             "required": true,
-            "description": "github access token, format: Token xxx",
+            "description": "github access token",
             "type": "string"
           },
           {
@@ -230,7 +281,7 @@
             "name": "Authorization",
             "in": "header",
             "required": true,
-            "description": "github access token, format: Token xxx",
+            "description": "github access token",
             "type": "string"
           }
         ],

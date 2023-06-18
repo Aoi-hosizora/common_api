@@ -20,6 +20,7 @@ var (
 	GithubQueryApiResponseError   = new5(500, "failed to query github api response")   // 50002
 	GithubQueryRepoIssuesError    = new5(500, "failed to query github repo issues")    // 50003
 	GithubQueryIssueTimelineError = new5(500, "failed to query github issue timeline") // 50004
+	GithubQueryUserProfileError   = new5(500, "failed to query given user profile")    // 50005
 )
 
 // SCUT related

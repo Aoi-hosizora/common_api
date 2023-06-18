@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Aoi-hosizora/ahlib/xerror"
 	"github.com/Aoi-hosizora/ahlib/xmodule"
 	"github.com/Aoi-hosizora/common_api/internal/model/object"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/module/sn"
@@ -11,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 )
 
 type GithubService struct {
@@ -80,4 +82,55 @@ func (g *GithubService) GetRepoIssuesByTitle(owner, repo string, page, limit uin
 		total = uint32(r.TotalCount)
 	}
 	return total, r.Items, nil
+}
+
+func (g *GithubService) GetAoiHosizoraUserProfile(token string) (map[string]any, error) {
+	const userApiUrl = "users/Aoi-hosizora"
+	var bs1, bs2 []byte
+	var code1, code2 int
+	var err1, err2 error
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		bs1, code1, _, err1 = g.RequestApiWithToken(userApiUrl, "")
+	}()
+	go func() {
+		defer wg.Done()
+		bs2, code2, _, err2 = g.RequestApiWithToken(userApiUrl, token)
+	}()
+	wg.Wait()
+	if err1 != nil || err2 != nil {
+		return nil, xerror.Combine(err1, err2)
+	}
+	if code1 != 200 || code2 != 200 {
+		return nil, errors.New("failed to make request to users api")
+	}
+
+	obj1 := make(map[string]any) // without token
+	obj2 := make(map[string]any) // with token
+	if json.Unmarshal(bs1, &obj1) != nil || json.Unmarshal(bs2, &obj2) != nil {
+		return nil, errors.New("failed to unmarshal response to json")
+	}
+
+	newFieldKeys := []string{"private_gists", "owned_private_repos", "total_private_repos"}
+	for _, key := range newFieldKeys {
+		if field, ok := obj2[key]; ok {
+			obj1[key] = field
+		}
+	}
+	needToCombineKeys := [][3]string{{"public_repos", "owned_private_repos", "total_repos"}, {"public_gists", "private_gists", "total_gists"}}
+	for _, keys := range needToCombineKeys {
+		key1, key2, newKey := keys[0], keys[1], keys[2]
+		if privateVal, ok := obj2[key2]; ok {
+			if publicVal, ok := obj1[key1]; ok {
+				if private, ok := privateVal.(float64); ok {
+					if public, ok := publicVal.(float64); ok {
+						obj1[newKey] = int32(private + public)
+					}
+				}
+			}
+		}
+	}
+	return obj1, nil
 }

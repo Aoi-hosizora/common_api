@@ -27,7 +27,7 @@ See https://api.github.com/en/rest/reference/rate-limit
 
     + Headers
 
-            Authorization: (string, required) - github access token, format: Token xxx
+            Authorization: (string, required) - github access token
 
     + Body
 
@@ -47,10 +47,37 @@ See https://api.github.com/en/rest/reference/rate-limit
 
 > `GET /github/token/{token}/api/{url}`
 
+**Attention: This api is deprecated!**
+
 + Parameters
 
-    + token (string, required) - github access token, format: Token xxx
+    + token (string, required) - github access token
     + url (string, required) - github api url without api.github.com prefix
+
++ Request (application/json)
+
+    + Body
+
++ Response 200 (application/json)
+
+    200 OK
+
+    + Attributes (string)
+
+    + Body
+
+## Request api with given token [/github/api/{url}{?token}]
+
+> `/github/api/{url}`
+
+### Request api with given token [GET]
+
+> `GET /github/api/{url}`
+
++ Parameters
+
+    + url (string, required) - github api url without api.github.com prefix
+    + token (string, required) - github access token
 
 + Request (application/json)
 
@@ -85,7 +112,7 @@ See https://api.github.com/en/rest/reference/rate-limit
 
     + Headers
 
-            Authorization: (string, required) - github access token, format: Token xxx
+            Authorization: (string, required) - github access token
 
     + Body
 
@@ -119,7 +146,7 @@ See https://api.github.com/en/rest/reference/rate-limit
 
     + Headers
 
-            Authorization: (string, required) - github access token, format: Token xxx
+            Authorization: (string, required) - github access token
 
     + Body
 
@@ -151,7 +178,7 @@ Fixed field: id?, node_id?, event(enum), actor(User), commit_id?, commit_url?, c
 
     + Headers
 
-            Authorization: (string, required) - github access token, format: Token xxx
+            Authorization: (string, required) - github access token
 
     + Body
 
@@ -160,6 +187,26 @@ Fixed field: id?, node_id?, event(enum), actor(User), commit_id?, commit_url?, c
     200 OK
 
     + Attributes (array[string])
+
+    + Body
+
+## Get Aoi-hosizora user profile with some private fields [/github/profile/aoihosizora]
+
+> `/github/profile/aoihosizora`
+
+### Get Aoi-hosizora user profile with some private fields [GET]
+
+> `GET /github/profile/aoihosizora`
+
++ Request (application/json)
+
+    + Body
+
++ Response 200 (application/json)
+
+    200 OK
+
+    + Attributes (string)
 
     + Body
 
