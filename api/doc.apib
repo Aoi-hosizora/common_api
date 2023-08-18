@@ -190,13 +190,41 @@ Fixed field: id?, node_id?, event(enum), actor(User), commit_id?, commit_url?, c
 
     + Body
 
-## Get Aoi-hosizora user profile with some private fields [/github/profile/aoihosizora]
+## Get Aoi-hosizora user profile with some private fields (default to cache in 1 hour) [/github/profile/aoihosizora{?force_refresh}]
 
 > `/github/profile/aoihosizora`
 
-### Get Aoi-hosizora user profile with some private fields [GET]
+### Get Aoi-hosizora user profile with some private fields (default to cache in 1 hour) [GET]
 
 > `GET /github/profile/aoihosizora`
+
++ Parameters
+
+    + force_refresh (boolean, optional) - force to refresh, without using cache
+
++ Request (application/json)
+
+    + Body
+
++ Response 200 (application/json)
+
+    200 OK
+
+    + Attributes (string)
+
+    + Body
+
+## Get Aoi-hosizora contribution status (default to cache in 1 hour) [/github/contribution/aoihosizora{?force_refresh}]
+
+> `/github/contribution/aoihosizora`
+
+### Get Aoi-hosizora contribution status (default to cache in 1 hour) [GET]
+
+> `GET /github/contribution/aoihosizora`
+
++ Parameters
+
+    + force_refresh (boolean, optional) - force to refresh, without using cache
 
 + Request (application/json)
 

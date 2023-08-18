@@ -56,12 +56,47 @@
         }
       }
     },
+    "/github/contribution/aoihosizora": {
+      "get": {
+        "summary": "Get Aoi-hosizora contribution status (default to cache in 1 hour)",
+        "operationId": "-github-contribution-aoihosizora-get",
+        "tags": [
+          "Github"
+        ],
+        "parameters": [
+          {
+            "name": "force_refresh",
+            "in": "query",
+            "required": false,
+            "description": "force to refresh, without using cache",
+            "type": "boolean"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
     "/github/profile/aoihosizora": {
       "get": {
-        "summary": "Get Aoi-hosizora user profile with some private fields",
+        "summary": "Get Aoi-hosizora user profile with some private fields (default to cache in 1 hour)",
         "operationId": "-github-profile-aoihosizora-get",
         "tags": [
           "Github"
+        ],
+        "parameters": [
+          {
+            "name": "force_refresh",
+            "in": "query",
+            "required": false,
+            "description": "force to refresh, without using cache",
+            "type": "boolean"
+          }
         ],
         "responses": {
           "200": {

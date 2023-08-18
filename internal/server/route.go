@@ -52,6 +52,7 @@ func setupRoutes(engine *gin.Engine) {
 	githubGroup.GET("repos/:owner/:repo/issues/search/:q", githubController.QueryRepoIssuesByTitle)
 	githubGroup.GET("users/:owner/issues/timeline", githubController.GetIssueTimeline)
 	githubGroup.GET("profile/aoihosizora", githubController.GetAoiHosizoraUserProfile)
+	githubGroup.GET("contribution/aoihosizora", githubController.GetAoiHosizoraContribution)
 
 	scutGroup := v1.Group("scut")
 	scutGroup.GET("notice/jw", scutController.GetJwNotices)

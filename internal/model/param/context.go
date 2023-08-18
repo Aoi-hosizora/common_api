@@ -5,6 +5,7 @@ import (
 	"github.com/Aoi-hosizora/ahlib-mx/xgin"
 	"github.com/Aoi-hosizora/ahlib/xnumber"
 	"github.com/gin-gonic/gin"
+	"strings"
 )
 
 type PageParam struct {
@@ -56,4 +57,15 @@ func BindBody[T any](c *gin.Context, obj T) (T, error) {
 		return zero, err
 	}
 	return obj, nil
+}
+
+func BindBoolQuery(c *gin.Context, name string, defaul bool) bool {
+	q := strings.ToLower(strings.TrimSpace(c.Query(name)))
+	if q == "true" || q == "t" || q == "yes" || q == "y" || q == "1" {
+		return true
+	}
+	if q == "false" || q == "f" || q == "no" || q == "n" || q == "0" {
+		return false
+	}
+	return defaul
 }

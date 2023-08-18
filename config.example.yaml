@@ -16,3 +16,4 @@ github:
   def-limit: 20 # default limit query parameter value
   max-limit: 50 # maximum limit query parameter value
   token: xxx # token which is in repo scope and has read:user perm
+  cache-duration: 3600 # duration in seconds, for cache some data

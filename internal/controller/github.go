@@ -15,6 +15,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
+	"sync"
+	"time"
 )
 
 func init() {
@@ -65,8 +67,14 @@ func init() {
 			AddParams(goapidoc.NewHeaderParam("Authorization", "string", true, "github access token")).
 			Responses(goapidoc.NewResponse(200, "string[]")), // ...
 
-		goapidoc.NewGetOperation("/github/profile/aoihosizora", "Get Aoi-hosizora user profile with some private fields").
+		goapidoc.NewGetOperation("/github/profile/aoihosizora", "Get Aoi-hosizora user profile with some private fields (default to cache in 1 hour)").
 			Tags("Github").
+			AddParams(goapidoc.NewQueryParam("force_refresh", "boolean", false, "force to refresh, without using cache")).
+			Responses(goapidoc.NewResponse(200, "string")), // ...
+
+		goapidoc.NewGetOperation("/github/contribution/aoihosizora", "Get Aoi-hosizora contribution status (default to cache in 1 hour)").
+			Tags("Github").
+			AddParams(goapidoc.NewQueryParam("force_refresh", "boolean", false, "force to refresh, without using cache")).
 			Responses(goapidoc.NewResponse(200, "string")), // ...
 	)
 }
@@ -74,12 +82,16 @@ func init() {
 type GithubController struct {
 	config        *config.Config
 	githubService *service.GithubService
+
+	cache *sync.Map
 }
 
 func NewGithubController() *GithubController {
 	return &GithubController{
 		config:        xmodule.MustGetByName(sn.SConfig).(*config.Config),
 		githubService: xmodule.MustGetByName(sn.SGithubService).(*service.GithubService),
+
+		cache: &sync.Map{},
 	}
 }
 
@@ -193,6 +205,10 @@ func (g *GithubController) GetIssueTimeline(c *gin.Context) *result.Result {
 
 // GetAoiHosizoraUserProfile GET /github/profile/aoihosizora
 func (g *GithubController) GetAoiHosizoraUserProfile(c *gin.Context) *result.Result {
+	if data, ok := g.cache.Load("profile"); ok && !param.BindBoolQuery(c, "force_refresh", false) {
+		return result.Ok().SetCode(200).SetData(data)
+	}
+
 	token := g.checkToken(g.config.Github.Token)
 	if token == "" {
 		return result.Error(errno.RequestParamError)
@@ -202,5 +218,46 @@ func (g *GithubController) GetAoiHosizoraUserProfile(c *gin.Context) *result.Res
 	if err != nil {
 		return result.Error(errno.GithubQueryUserProfileError).SetError(err, c)
 	}
+
+	if g.config.Github.CacheDuration > 0 {
+		g.cache.Store("profile", data)
+		go func() {
+			<-time.NewTicker(time.Second * time.Duration(g.config.Github.CacheDuration)).C
+			g.cache.Delete("profile")
+		}()
+	}
+
+	return result.Ok().SetData(data)
+}
+
+// GetAoiHosizoraContribution GET /github/contribution/aoihosizora
+func (g *GithubController) GetAoiHosizoraContribution(c *gin.Context) *result.Result {
+	if data, ok := g.cache.Load("contribution"); ok && !param.BindBoolQuery(c, "force_refresh", false) {
+		return result.Ok().SetCode(200).SetData(data)
+	}
+
+	token := g.checkToken(g.config.Github.Token)
+	if token == "" {
+		return result.Error(errno.RequestParamError)
+	}
+
+	data, err := g.githubService.GetAoiHosizoraContribution(token)
+	if err != nil {
+		return result.Error(errno.GithubQueryContributionError).SetError(err, c)
+	}
+	total := int32(0)
+	for _, v := range data {
+		total += v
+	}
+	data["total"] = total
+
+	if g.config.Github.CacheDuration > 0 {
+		g.cache.Store("contribution", data)
+		go func() {
+			<-time.NewTicker(time.Second * time.Duration(g.config.Github.CacheDuration)).C
+			g.cache.Delete("contribution")
+		}()
+	}
+
 	return result.Ok().SetData(data)
 }

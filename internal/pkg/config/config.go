@@ -32,9 +32,10 @@ type ServerConfig struct {
 }
 
 type GithubConfig struct {
-	DefLimit uint32 `yaml:"def-limit" default:"20" validate:"gt=0"`
-	MaxLimit uint32 `yaml:"max-limit" default:"50" validate:"gt=0"`
-	Token    string `yaml:"token"`
+	DefLimit      uint32 `yaml:"def-limit" default:"20" validate:"gt=0"`
+	MaxLimit      uint32 `yaml:"max-limit" default:"50" validate:"gt=0"`
+	Token         string `yaml:"token"`
+	CacheDuration uint32 `yaml:"cache-duration" default:"3600" validate:"gte=0"`
 }
 
 var _debugMode = true

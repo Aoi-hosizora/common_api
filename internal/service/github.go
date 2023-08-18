@@ -1,18 +1,22 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/Aoi-hosizora/ahlib/xerror"
 	"github.com/Aoi-hosizora/ahlib/xmodule"
+	"github.com/Aoi-hosizora/ahlib/xnumber"
 	"github.com/Aoi-hosizora/common_api/internal/model/object"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/module/sn"
 	"github.com/Aoi-hosizora/common_api/internal/pkg/static"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 	"sync"
+	"time"
 )
 
 type GithubService struct {
@@ -133,4 +137,58 @@ func (g *GithubService) GetAoiHosizoraUserProfile(token string) (map[string]any,
 		}
 	}
 	return obj1, nil
+}
+
+func (g *GithubService) GetAoiHosizoraContribution(token string) (map[string]int32, error) {
+	username := "Aoi-hosizora"
+	from := 2019
+	to := time.Now().Year()
+	token = "Bearer " + strings.TrimPrefix(token, "Token ")
+	template := `{"query":"query {\n  user(login: \"%s\") {\n    name\n    contributionsCollection(from: \"%d-01-01T00:00:00Z\", to: \"%d-12-31T23:59:59Z\") {\n      contributionCalendar {\n        totalContributions\n      }\n    }\n  }\n}"}`
+
+	/*
+		curl
+		-H "Authorization: bearer xxx"
+		-X POST
+		-d '{"query":"query {\n  user(login: \"Aoi-hosizora\") {\n    name\n    contributionsCollection(from: \"2020-01-01T00:00:00Z\", to: \"2020-12-31T23:59:59Z\") {\n      contributionCalendar {\n        colors\n        totalContributions\n      }\n    }\n  }\n}"}'
+		https://api.github.com/graphql
+	*/
+
+	mutex := sync.Mutex{}
+	out := make(map[string]int32)
+
+	eg := xerror.NewErrorGroup(context.Background())
+	for year := from; year <= to; year++ {
+		year := year
+		eg.Go(func(c context.Context) error {
+			body := fmt.Sprintf(template, username, year, year)
+			bs, _, err := g.httpService.HttpPost(static.GithubGraphqlApi, strings.NewReader(body), func(r *http.Request) {
+				r.Header.Add("Authorization", token)
+				r.Header.Add("Accept", static.GithubAccept)
+			})
+			if err != nil {
+				return err
+			}
+			re := regexp.MustCompile(`"totalContributions":(\d*)`)
+			matches := re.FindStringSubmatch(string(bs))
+			if len(matches) < 2 {
+				return errors.New("failed to query totalContributions")
+			}
+			contribution, err := xnumber.Atoi32(matches[1])
+			if err != nil {
+				return err
+			}
+
+			mutex.Lock()
+			out[xnumber.Itoa(year)] = contribution
+			mutex.Unlock()
+			return nil
+		})
+	}
+
+	err := eg.Wait()
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
